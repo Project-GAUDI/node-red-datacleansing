@@ -1,0 +1,427 @@
+<!-- ノードのプロパティに関する定義 -->
+<script type="text/javascript">
+(function() {
+    // ノードカテゴリの定義
+    const myNodeCategory = "data cleansing";
+    // ノード論理名の定義
+    const myNodeName = "data-cleansing";
+    // ノード表示名の定義
+    const myNodeDispName = "Data Cleansing";
+    // ノード色の定義
+    const myNodeColor = "#3FADB5";
+    // アイコン名の定義
+    const myIconName = "GAUDIlogo.png";
+
+    // プロパティデフォルト値
+    const prop_default_fmt = "format_info";
+    const prop_default_data = "payload";
+    const prop_default_dataType = "GaudiMsg";
+    const prop_default_addins= {data: [{funcName:"func1",funcDescription:"func1-description",pythonCode:"def func1(input, options):\n\treturn input"}]};
+
+    // エディター内容破棄
+    function disposeEditors(node) {
+        Object.keys(node.editors).forEach(
+            key => {
+                node.editors[key].destroy();
+                delete node.editors[key];
+            }
+        );
+    }
+
+    RED.nodes.registerType(myNodeName,{
+        category: myNodeCategory,
+        color: myNodeColor,
+        defaults: {
+            name: {value:""},
+            data: {value:prop_default_data, required:true},
+            dataType: {value:prop_default_dataType},
+            fmtinfo: {value:prop_default_fmt, required:true},
+            addins: {value:prop_default_addins},
+            dirty: {value:true},
+            editors: {value: []},    // 連想配列として宣言。(HTML上ではこの記述が可能)
+            codecheck: {value: 0, required:true, validate:function(v){return (0==v)?true:false;}},
+            trace: {value:false}
+        },
+        inputs: 1,
+        outputs: 2,
+        icon: myIconName,
+
+        label: function() {
+            return this.name||myNodeDispName;
+        },
+
+        paletteLabel: function(){
+            return myNodeDispName;
+        },
+
+        inputLabels: "",
+        outputLabels: ["出力1:クレンジング結果", "出力2:エラー出力/トレース出力"],
+
+        oneditprepare: function() {
+            var node = this;
+
+            // エディタ生成
+            var buildEditor = function(id, value, defaultValue) {
+                var editor = RED.editor.createEditor({
+                    id: id,
+                    mode: 'ace/mode/python',
+                    value: value || defaultValue || "",
+                    globals: {
+                        msg:true,
+                        context:true,
+                        RED: true,
+                        util: true,
+                        flow: true,
+                        global: true,
+                        console: true,
+                        Buffer: true,
+                        setTimeout: true,
+                        clearTimeout: true,
+                        setInterval: true,
+                        clearInterval: true
+                    }
+                });
+                if (defaultValue && value === "") {
+                    editor.moveCursorTo(defaultValue.split("\n").length - 1, 0);
+                }
+                return editor;
+            }
+
+            // エディタ拡張画面
+            var expandButtonClickHandler = function(editor) {
+                return function(e) {
+                    e.preventDefault();
+                    var value = editor.getValue();
+                    RED.editor.editJavaScript({
+                        title: "Pythonエディタ",
+                        value: value,
+                        width: "Infinity",
+                        cursor: editor.getCursorPosition(),
+                        mode: "ace/mode/python",
+                        complete: function(v,cursor) {
+                            editor.setValue(v, -1);
+                            editor.gotoLine(cursor.row+1,cursor.column,false);
+                            setTimeout(function() {
+                                editor.focus();
+                            },300);
+                        }
+                    })
+                }
+            }
+            
+            $("#node-input-data").typedInput({
+                type:"GaudiMsg",
+                types:[
+                    {
+                        value: "GaudiMsg",
+                        label: "GAUDI msg."
+                    },
+                    "msg"
+                ],
+                typeField: "#node-input-dataType"
+            })
+            
+            $("#node-input-fmtinfo").typedInput({
+                type:"msg",
+                types:["msg"],
+                typeField: "#node-input-fmt-fmtinfoType"
+            })
+
+            $("#node-input-format-container").editableList({
+                addItem: function (container, i, opt) {
+                    idx = i + 1;
+                    // 初期値指定
+                    if (!opt.hasOwnProperty('funcName')) {
+                        opt.funcName = "func" + idx;
+                    }
+                    if (!opt.hasOwnProperty('funcDescription')) {
+                        opt.funcDescription = "func" + idx + "-description";
+                    }
+                    if (!opt.hasOwnProperty('pythonCode')) {
+                        opt.pythonCode = "def func" + idx + "(input, options):\n\treturn input";
+                    }
+
+
+                    // ----- 行挿入
+                    var row = $('<div/>').appendTo(container);
+                    row.css({
+                        overflow: 'hidden',
+                        whiteSpace: 'nowrap'
+                    });
+
+
+                    // ---------- 階層1
+                    // 関数名行挿入
+                    var row_funcName = $('<div/>').appendTo(row);
+
+                    // 関数説明挿入
+                    var row_funcDescription = $('<div/>', {
+                        style: "margin-top: 8px;"
+                    }).appendTo(row);
+
+                    // Pythonコード行挿入
+                    var row_pythonCode = $('<div/>', {
+                        class: "node-text-editor-row",
+                        style: "position:relative;max-height:32px;margin-top: 8px;"
+                    }).appendTo(row);
+
+
+                    // --------------- 階層2 - 関数名
+                    // 関数名_ラベル
+                    var funcName_label = $('<label/>', {
+                        for: "node-input-funcName"
+                    }).text("関数名").appendTo(row_funcName);
+
+                    // 関数名_入力欄
+                    var funcName_input = $('<input/>', {
+                        type: "text",
+                        class: "node-input-funcName",
+                    }).appendTo(row_funcName);
+                    funcName_input.typedInput({ default: 'str', types: ['str'] });
+                    funcName_input.typedInput('type', 'str');
+                    funcName_input.typedInput('value', opt.funcName);
+
+
+                    // --------------- 階層2 - 関数説明
+                    // 関数説明_ラベル
+                    var funcDescription_label = $('<label/>', {
+                        for: "node-input-funcDescription"
+                    }).text("関数説明").appendTo(row_funcDescription);
+
+                    // 関数説明_入力欄
+                    var funcDescription_input = $('<input/>', {
+                        type: "text",
+                        class: "node-input-funcDescription",
+                    }).appendTo(row_funcDescription);
+                    funcDescription_input.typedInput({ default: 'str', types: ['str'] });
+                    funcDescription_input.typedInput('type', 'str');
+                    funcDescription_input.typedInput('value', opt.funcDescription);
+
+
+                    // --------------- 階層2 - Pythonコード
+                    // Pythonコード_ラベル
+                    var pythonCode_label = $('<label/>', {
+                        for: "node-input-pythonCode"
+                    }).text("Pythonコード").appendTo(row_pythonCode);
+
+                    // 重複しないIDを生成
+                    var pythonCode_input_id = "node-input-pythonCode-editor" + idx + "_" + Date.now();
+                    // Pythonコード_入力欄
+                    var pythonCode_input = $('<div/>', {
+                        id: pythonCode_input_id,
+                        class: "node-text-editor",
+                        style: "display:inline-block;vertical-align:middle;height:32px;max-height:32px;width: calc(95% - 100px);"
+                    }).appendTo(row_pythonCode);
+
+                    // Pythonコード_拡大ボタン_枠
+                    var pythonCode_expandDiv = $('<div/>', {
+                        style: "position: absolute; right:0; bottom: calc(100% - 20px); z-Index: 5;"
+                    }).appendTo(row_pythonCode);
+
+                    // Pythonコード_拡大ボタン_本体
+                    var pythonCode_expandBtn = $('<button/>', {
+                        id: "node-pythonCode-expand" + idx,
+                        class: "red-ui-button red-ui-button-small"
+                    }).appendTo(pythonCode_expandDiv);
+
+                    // Pythonコード_拡大ボタン_アイコン
+                    var pythonCode_expandIcon = $('<i/>', {
+                        class: "fa fa-expand"
+                    }).appendTo(pythonCode_expandBtn);
+
+
+                    // ----- 行ごとに行う後処理
+                    // エディタ生成
+                    var editor = buildEditor(pythonCode_input_id, opt.pythonCode, undefined)
+                    // エディタ拡張
+                    pythonCode_expandBtn.on("click", expandButtonClickHandler(editor));
+                    // エディタ拡張ボタンポップアップ
+                    RED.popover.tooltip(pythonCode_expandBtn, RED._("node-red:common.label.expand"));
+
+                    // エディタをメンバー変数で記憶
+                    node.editors[pythonCode_input_id] = editor;
+                },
+                sortable: true,
+                removable: true
+            });
+
+            // editableListオブジェクトを取得
+            var container = $("#node-input-format-container");
+            // editableList初期化
+            container.editableList('empty');
+
+            // addinsの情報をeditableListに反映
+            var infoData = node.addins.data;
+            for (var i = 0; i < infoData.length; i++) {
+                var info = infoData[i];
+                container.editableList('addItem', info);
+            }
+
+        },
+
+        oneditsave: function() {
+            var node = this;
+
+            // 更新フラグを立てる（Addinフォルダ書き込みの為）
+            node.dirty = true;
+
+            // コードチェック結果をリセットする
+            $("#node-input-codecheck").val(0);
+
+            // editableListの再構築
+            var itemList = $("#node-input-format-container").editableList('items');
+            var infoList = [];
+                    
+            var nglist = [];                // codeチェック結果格納用
+            itemList.each(function(i) {
+                // 関連タグを抽出
+                var row = $(this);
+                var tagFuncName = row.find(".node-input-funcName");
+                var tagFuncDescription = row.find(".node-input-funcDescription");
+                var tagPythonCode = row.find(".node-text-editor");
+
+                // 各タグの格納値などを取得
+                var funcName = tagFuncName.typedInput('value');
+                var funcDiscription = tagFuncDescription.typedInput('value');
+                var editorId = tagPythonCode.attr('id');
+                var pythonCode = node.editors[editorId].getValue(); 
+
+                // Pythonコードチェック
+                // 指定した関数名と一致する関数定義があるかをチェックする
+                var regex = new RegExp("def[\t ]+" + funcName + "\\(.*\\)\:");
+                if (!regex.test(pythonCode)) {
+                    nglist.push(funcName);
+                }
+
+                var data = {funcName:funcName, funcDescription:funcDiscription, pythonCode:pythonCode};
+                infoList.push(data);
+            });
+            node.addins.data = infoList;
+
+            // エディター内容破棄
+            disposeEditors(node);
+
+            // pythonコード不正チェック結果を設定
+            node.codecheck = nglist.length;
+            $("#node-input-codecheck").val(node.codecheck);
+
+        },
+
+        oneditcancel: function() {
+            var node = this;
+            // エディター内容破棄
+            disposeEditors(node);
+        },
+
+        oneditresize: function(size) {
+            var node = this;
+
+            var rows = $("#dialog-form>div:not(.node-input-format-container-row)");
+            var height = size.height;
+            for (var i = 0; i < rows.length; i++) {
+                height -= $(rows[i]).outerHeight(true);
+            }
+            var editorRow = $("#dialog-form>div.node-input-format-container-row");
+            height -= (parseInt(editorRow.css("marginTop")) + parseInt(editorRow.css("marginBottom")));
+            $("#node-input-format-container").editableList('height', height);
+        },
+    });
+})();
+</script>
+
+<!-- ノードプロパティ編集画面 -->
+<script type="text/html" data-template-name="data-cleansing">
+    <input type="hidden" id="node-input-addins">
+    <input type="hidden" id="node-input-dirty">
+    <input type="hidden" id="node-input-codecheck">
+
+    <div class="form-row">
+        <label for="node-input-name" style="width:150px;"><i class="fa fa-tag"></i>名前</label>
+        <input type="text" id="node-input-name" placeholder="data cleansing">
+    </div>
+    <div class="form-row">
+        <label for="node-input-data" style="width:150px;"><i class="fa fa-tag"></i>入力</label>
+        <input type="text" id="node-input-data">
+        <input type="hidden" id="node-input-dataType">
+    </div>
+    <div class="form-row">
+        <label for="node-input-fmtinfo" style="width:150px;"><i class="fa fa-tag"></i>フォーマット情報</label>
+        <input type="text" id="node-input-fmtinfo">
+        <input type="hidden" id="node-input-fmtinfoType">
+    </div>
+    <div class="form-row node-input-format-container-row">
+        <ol id="node-input-format-container" style="min-height: 150px;min-width: 400px;"></ol>
+    </div>
+    <div class="form-row">
+        <label for="node-input-trace" style="width:150px;"><i class="fa fa-bug"></i>トレース</label>
+        <label for="node-input-trace" style="width:70%">
+        <input type="checkbox" id="node-input-trace" style="display:inline-block; width:22px; vertical-align:top;">出力２に出力
+        </label>
+    </div>
+</script>
+
+<!-- ノードヘルプ -->
+<script type="text/html" data-help-name="data-cleansing">
+    <p>データのクレンジング（抽出・変換）を行う。</p>
+    <h3>入力</h3>
+    <dl class="message-properties">
+        <dt>入力
+            <span class="property-type">文字列</span>
+        </dt>
+        <dd>変換対象の入力データを指定する。</dd>
+        <ul>
+            <li>GaudiMsgタイプ指定時</li>
+            <dd>GAUDI標準形式メッセージのデータの格納プロパティを指定する。</dd>
+            <li>msgタイプ指定時</li>
+            <dd>配列形式のデータを指定する。</dd>
+        </ul>
+    </dl>
+    <dl class="message-properties">
+        <dt>フォーマット情報
+            <span class="property-type">文字列</span>
+        </dt>
+        <dd>変換対象データのクレンジング内容を定義したフォーマット情報を指定する。</dd>
+    </dl>
+    <dl class="message-properties">
+        <dt>関数名
+            <span class="property-type">文字列</span>
+        </dt>
+        <dd>変換情報の変換名として登録された関数名を指定する。</dd>
+    </dl>
+    <dl class="message-properties">
+        <dt>関数説明
+            <span class="property-type">文字列</span>
+        </dt>
+        <dd>変換関数の説明を記述する。</dd>
+    </dl>
+    <dl class="message-properties">
+        <dt>Pythonコード
+            <span class="property-type">文字列</span>
+        </dt>
+        <dd>変換処理を行うPythonコードを記述する。</dd>
+        <dd>関数名で指定した名称の関数定義の記述が必要。</dd>
+    </dl>
+    <dl class="message-properties">
+        <dt>トレース
+            <span class="property-type">フラグ</span>
+        </dt>
+        <dd>トレース出力有無を切り替える。</dd>
+        <dd>処理に負荷がかかる為、通常はオフにして下さい。</dd>
+    </dl>
+
+    <h3>出力</h3>
+    <ol class="node-ports">
+        <li>クレンジング結果
+            <dl class="message-properties">
+                <dt>msg["入力"]<span class="property-type">GAUDI標準メッセージ|配列</span></dt>
+                <dd>クレンジング結果を入力データと置き換えて出力する。</dd>
+            </dl>
+        </li>
+        <li>エラー出力／トレース出力
+            <dl class="message-properties">
+                <dt>payload<span class="property-type">配列</span></dt>
+                <dd>処理中に発生したエラーの情報および変換過程のトレース情報を出力する。</dd>
+            </dl>
+        </li>
+    </ol>
+</script>

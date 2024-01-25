@@ -1,0 +1,208 @@
+<!-- ノードのプロパティに関する定義 -->
+<script type="text/javascript">
+(function() {
+    // ノードカテゴリの定義
+    const myNodeCategory = "data cleansing";
+    // ノード論理名の定義
+    const myNodeName = "set-format-info";
+    // ノード表示名の定義
+    const myNodeDispName = "Set Format Info";
+    // ノード色の定義
+    const myNodeColor = "#3FADB5";
+    // アイコン名の定義
+    const myIconName = "GAUDIlogo.png";
+
+    // プロパティデフォルト値
+    const prop_default_fno = "format";
+    const prop_default_fnoType = "metaKey";
+    const prop_default_fmt = "format_info";
+    const prop_default_fmtinfos = {data:[{fno:"000", fmt:"{}"}] };
+
+    RED.nodes.registerType(myNodeName, {
+        category: myNodeCategory,
+        color: myNodeColor,
+        defaults: {
+            name: { value: "" },
+            fno: {value:prop_default_fno, required:true},
+            fnoType: {value:prop_default_fnoType},
+            fmt: {value:prop_default_fmt, required:true},
+            fmtinfos: { value:prop_default_fmtinfos }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: myIconName,
+        label: function () {
+            return this.name || myNodeDispName;
+        },
+        paletteLabel: function () {
+            return myNodeDispName;
+        },
+        oneditprepare: function () {
+            var node = this;
+
+            $("#node-input-fno").typedInput({
+                type:"metaKey",
+                types:[
+                    {
+                        value: "metaKey",
+                        label: "metaKey"
+                    },
+                    "msg"
+                ],
+                typeField: "#node-input-fnoType"
+            })
+            $("#node-input-fmt").typedInput({
+                type:"msg",
+                types:["msg"],
+                typeField: "#node-input-fmt-type"
+            })
+
+            $("#node-input-format-container").css('min-height', '150px').css('min-width', '400px').editableList({
+                addItem: function (container, i, opt) {
+                    if (!opt.hasOwnProperty('fno')) {
+                        opt.fno = "000";
+                    }
+                    if (!opt.hasOwnProperty('fmt')) {
+                        opt.fmt = "{}";
+                    }
+
+                    // 行分割
+                    var row = $('<div/>').appendTo(container);
+                    row.css({
+                        overflow: 'hidden',
+                        whiteSpace: 'nowrap'
+                    });
+
+                    // フォーマット番号ラベル
+                    var fnoLabel = $('<label/>', {
+                        for: "node-input-fno-value",
+                        type: "text"
+                    }).text("フォーマット番号").css('min-width', '120px').appendTo(row);
+
+                    // フォーマット番号
+                    var fnoField = $('<input/>', {
+                        class: "node-input-fno-value",
+                        type: "text"
+                    }).css('max-width', '100px').appendTo(row);
+                    fnoField.typedInput({ default: 'str', types: ['str'] });
+                    fnoField.typedInput('value', opt.fno);
+                    fnoField.typedInput('type', 'str');
+
+                    // フォーマット情報ラベル
+                    var fmtLabel = $('<label/>', {
+                        for: "node-input-fmt-value",
+                        type: "text",
+                        style: "margin-left: 15px;"
+                    }).text("フォーマット情報").css('min-width', '120px').appendTo(row);
+
+                    // フォーマット情報
+                    var fmtField = $('<input/>', {
+                        class: "node-input-fmt-value",
+                        type: "json"
+                    }).css('max-width', '200px').appendTo(row);
+                    fmtField.typedInput({ default: 'json', types: ['json'] });
+                    fmtField.typedInput('value', opt.fmt);
+                    fmtField.typedInput('type', 'json');
+
+                },
+                sortable: true,
+                removable: true
+            });
+
+            var container = $("#node-input-format-container");
+            container.editableList('empty');
+            var fmtdata = node.fmtinfos.data;
+            for (var i = 0; i < fmtdata.length; i++) {
+                var fmtinfo = fmtdata[i];
+                container.editableList('addItem', fmtinfo);
+            }
+
+        },
+        oneditsave: function() {
+            var formats = $("#node-input-format-container").editableList('items');
+            var node = this;
+
+            var infosdata = [];
+            formats.each(function(i) {
+                var ifmt = $(this);
+                var fno = ifmt.find(".node-input-fno-value");
+                var fmt = ifmt.find(".node-input-fmt-value");
+                var data = {fno:fno.typedInput('value'), fmt:fmt.typedInput('value')};
+                infosdata.push(data);
+            });
+            node.fmtinfos.data = infosdata;
+        },
+        oneditresize: function (size) {
+            var rows = $("#dialog-form>div:not(.node-input-format-container-row)");
+            var height = size.height;
+            for (var i = 0; i < rows.length; i++) {
+                height -= $(rows[i]).outerHeight(true);
+            }
+            var editorRow = $("#dialog-form>div.node-input-format-container-row");
+            height -= (parseInt(editorRow.css("marginTop")) + parseInt(editorRow.css("marginBottom")));
+            $("#node-input-format-container").editableList('height', height);
+        }
+    });
+})();
+</script>
+
+<!-- ノードプロパティ編集画面 -->
+<script type="text/html" data-template-name="set-format-info">
+    <div class="form-row" style="white-space:nowrap;">
+        <label style="width:170px;"><i class="fa fa-tag"></i> 名前</label>
+        <input type="text" id="node-input-name" placeholder="SetFormatInfo">
+    </div>
+    <div class="form-row" style="white-space:nowrap;">
+        <label style="width:170px;"><i class="fa fa-tag"></i> 入力(フォーマット番号)</label>
+        <input type="text" id="node-input-fno">
+        <input type="hidden" id="node-input-fnoType">
+    </div>
+    <div class="form-row" style="white-space:nowrap;">
+        <label style="width:170px;"><i class="fa fa-tag"></i> 出力(フォーマット情報)</label>
+        <input type="text" id="node-input-fmt">
+        <input type="hidden" id="node-input-fmt-type">
+    </div>
+    <input type="hidden" id="node-input-fmtinfos"/>
+    <div class="form-row node-input-format-container-row">
+        <ol id="node-input-format-container"></ol>
+    </div>
+</script>
+
+<!-- ノードヘルプ -->
+<script type="text/html" data-help-name="set-format-info">
+    <p>ノードプロパティでフォーマット番号とその定義情報を設定します。入力プロパティのフォーマット番号に対応する定義情報を入力プロパティに出力します。該当の定義情報がなければエラーになります。</p>
+    <h3>入力</h3>
+    <dl class="message-properties">
+        <dt>入力(フォーマット番号)<span class="property-type">文字列</span></dt>
+        <dd>取得対象のフォーマット番号を指定する。</dd>
+        <ul>
+            <li>metaKeyタイプ指定時</li>
+            <dd>msg.properties.propertyList から取得するオブジェクトのkey値を指定する。</dd>
+
+            <li>msgタイプ指定時</li>
+            <dd>msgのプロパティを直接指定する。</dd>
+        </ul>
+    </dl>
+    <dl class="message-properties">
+        <dt>出力(フォーマット情報)<span class="property-type">文字列</span></dt>
+        <dd>フォーマット情報の出力先を指定する。</dd>
+    </dl>
+    <dl class="message-properties">
+        <dt>フォーマット番号<span class="property-type">文字列</span></dt>
+        <dd>フォーマット情報に紐づける番号を指定する。</dd>
+    </dl>
+    <dl class="message-properties">
+        <dt>フォーマット情報<span class="property-type">JSON</span></dt>
+        <dd>フォーマットの定義情報を記述する。</dd>
+    </dl>
+
+    <h3>出力</h3>
+    <ol class="node-ports">
+        <li>取得結果
+            <dl class="message-properties">
+                <dt></dt>
+                <dd>入力(フォーマット番号)のフォーマット番号に対応したフォーマット情報をセットする。</dd>
+            </dl>
+        </li>
+    </ol>
+</script>

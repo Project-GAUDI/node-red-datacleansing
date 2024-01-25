@@ -1,0 +1,17 @@
+{
+    "name": "node-red-datacleansing",
+    "version": "1.0.2",
+    "description": "",
+    "author": "",
+    "license": "ISC",
+    "keywords": [
+        "node-red"
+    ],
+    "node-red": {
+        "nodes": {
+            "get-format-number": "get-format-number/get-format-number.js",
+            "set-format-info": "set-format-info/set-format-info.js",
+            "data-cleansing": "data-cleansing/data-cleansing.js"
+        }
+    }
+}
