@@ -4,9 +4,9 @@
     "description": "",
     "author": "",
     "publishConfig": {
-        "registry": "https://npm.pkg.github.com/"
+        "registry": "https://npm.pkg.github.com/Project-GAUDI/"
       },
-    "repository": "git://github.com/Project-GAUDI/node-red-datacleansing.git",
+    "repository": "https://github.com/Project-GAUDI/node-red-datacleansing.git",
     "license": "ISC",
     "keywords": [
         "node-red"
