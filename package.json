@@ -3,6 +3,10 @@
     "version": "1.0.2",
     "description": "",
     "author": "",
+    "publishConfig": {
+        "registry": "https://npm.pkg.github.com/"
+      },
+    "repository": "git://github.com/Project-GAUDI/node-red-datacleansing.git",
     "license": "ISC",
     "keywords": [
         "node-red"

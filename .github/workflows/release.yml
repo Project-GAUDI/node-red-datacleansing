@@ -1,0 +1,40 @@
+name: Publish NuGet Package
+
+on:
+  workflow_dispatch:
+    inputs:
+      release-version:
+        description: 'Release Version'
+        required: true
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set Node.js version
+      uses: actions/setup-node@v4
+      with:
+        node-version: '14'
+        registry-url: 'https://npm.pkg.github.com/'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Build
+      run: npm run build
+
+    - name: Publish to GitHub Packages
+      run: npm publish
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+    # タグ付け
+    - name: Create tag
+      run: |
+        git tag ${{ inputs.release-version }}
+        git push origin ${{ inputs.release-version }}
+        
