@@ -1,0 +1,208 @@
+<!-- ノードのプロパティに関する定義 -->
+<script type="text/javascript">
+(function() {
+    // ノードカテゴリの定義
+    const myNodeCategory = "config";
+    // ノード論理名の定義
+    const myNodeName = "format-info";
+    // ノード表示名の定義
+    const myNodeDispName = "Format Info";
+    // ノード色の定義
+    const myNodeColor = "#3FADB5";
+    // アイコン名の定義
+    const myIconName = "GAUDIlogo.png";
+
+    // プロパティデフォルト値
+    const prop_default_fmtinfos = "[{\"fno\":\"000\", \"fmt\":\"{}\"}]";
+
+    RED.nodes.registerType(myNodeName, {
+        category: myNodeCategory,
+        color: myNodeColor,
+        defaults: {
+            name: { value: "Format Info" },
+            fmtinfos: { value:prop_default_fmtinfos }
+        },
+        icon: myIconName,
+        label: function () {
+            return this.name || myNodeDispName;
+        },
+        paletteLabel: function () {
+            return myNodeDispName;
+        },
+        oneditprepare: function () {
+            var node = this;
+
+            $("#node-config-input-format-container").css('min-height', '150px').css('min-width', '400px').editableList({
+                addItem: function (container, i, opt) {
+                    if (!opt.hasOwnProperty('fno')) {
+                        opt.fno = "000";
+                    }
+                    if (!opt.hasOwnProperty('fmt')) {
+                        opt.fmt = "{}";
+                    }
+
+                    // 行分割
+                    var row = $('<div/>').appendTo(container);
+                    row.css({
+                        overflow: 'hidden',
+                        whiteSpace: 'nowrap'
+                    });
+
+                    // フォーマットIDラベル
+                    var fnoLabel = $('<label/>', {
+                        for: "node-config-input-fno-value",
+                        type: "text"
+                    }).text("フォーマットID").css('min-width', '120px').appendTo(row);
+
+                    // フォーマットID
+                    var fnoField = $('<input/>', {
+                        class: "node-config-input-fno-value",
+                        type: "text"
+                    }).css('max-width', '100px').appendTo(row);
+                    fnoField.typedInput({ default: 'str', types: ['str'] });
+                    fnoField.typedInput('value', opt.fno);
+                    fnoField.typedInput('type', 'str');
+
+                    // フォーマット情報ラベル
+                    var fmtLabel = $('<label/>', {
+                        for: "node-config-input-fmt-value",
+                        type: "text",
+                        style: "margin-left: 15px;"
+                    }).text("フォーマット情報").css('min-width', '120px').appendTo(row);
+
+                    // フォーマット情報
+                    var fmtField = $('<input/>', {
+                        class: "node-config-input-fmt-value",
+                        type: "json"
+                    }).css('max-width', '220px').appendTo(row);
+                    fmtField.typedInput({ default: 'json', types: ['json'] });
+                    fmtField.typedInput('value', opt.fmt);
+                    fmtField.typedInput('type', 'json');
+
+                },
+                sortable: true,
+                removable: true
+            });
+
+            var container = $("#node-config-input-format-container");
+            container.editableList('empty');
+            var fmtdata = JSON.parse(node.fmtinfos);
+            for (var i = 0; i < fmtdata.length; i++) {
+                var fmtinfo = fmtdata[i];
+                container.editableList('addItem', fmtinfo);
+            }
+        },
+        oneditsave: function() {
+            var formats = $("#node-config-input-format-container").editableList('items');
+            var node = this;
+
+            var infosdata = [];
+            formats.each(function(i) {
+                var ifmt = $(this);
+                var fno = ifmt.find(".node-config-input-fno-value");
+                var fmt = ifmt.find(".node-config-input-fmt-value");
+                var data = {fno:fno.typedInput('value'), fmt:fmt.typedInput('value')};
+                infosdata.push(data);
+            });
+
+            $("#node-config-input-fmtinfos").val(JSON.stringify(infosdata));
+        },
+        oneditresize: function (size) {
+            var rows = $("#node-config-dialog-edit-form>div:not(.node-config-input-format-container-row)");
+            var height = size.height;
+            for (var i = 0; i < rows.length; i++) {
+                height -= $(rows[i]).outerHeight(true);
+            }
+            var editorRow = $("#node-config-dialog-edit-form>div.node-config-input-format-container-row");
+            height -= (parseInt(editorRow.css("marginTop")) + parseInt(editorRow.css("marginBottom")));
+            $("#node-config-input-format-container").editableList('height', height);
+        }
+    });
+})();
+</script>
+
+<!-- ノードプロパティ編集画面 -->
+<script type="text/html" data-template-name="format-info">
+    <div class="form-row" style="white-space:nowrap;">
+        <label style="width:170px;"><i class="fa fa-tag"></i> 名前</label>
+        <input type="text" id="node-config-input-name" placeholder="FormatInfo">
+    </div>
+    <input type="hidden" id="node-config-input-fmtinfos"/>
+    <div class="form-row node-config-input-format-container-row">
+        <ol id="node-config-input-format-container"></ol>
+    </div>
+</script>
+
+<!-- ノードヘルプ -->
+<script type="text/html" data-help-name="format-info">
+    <p>ノードプロパティでフォーマットIDとそのIDに対する定義情報を設定します。</p>
+    <h3>プロパティ</h3>
+    <dl class="node-config-input-fno-value">
+        <dt>フォーマットID<span class="property-type">文字列</span></dt>
+        <dd>フォーマット情報に紐づけるIDを指定する。</dd>
+    </dl>
+    <dl class="node-config-input-fmt-value">
+        <dt>フォーマット情報<span class="property-type">JSON</span></dt>
+        <dd>フォーマットの定義情報を記述する。</dd>
+    </dl>
+
+    <h3>フォーマット定義情報</h3>
+    <ol class="format-info">
+        <table>
+            <tr>
+                <td>JSON Key</td>
+                <td>Type</td>
+                <td>Required</td>
+                <td>Description</td>
+            </tr>
+            <tr>
+                <td>FormatNo</td>
+                <td>string</td>
+                <td>　</td>
+                <td>フォーマットID</td>
+            </tr>
+            <tr>
+                <td>OutputData</td>
+                <td>array</td>
+                <td>○</td>
+                <td>出力データ情報リスト</td>
+            </tr>
+            <tr>
+                <td>&nbsp; OutputIndex</td>
+                <td>int</td>
+                <td>○</td>
+                <td>出力データインデックス（1 ～）</td>
+            </tr>
+            <tr>
+                <td>&nbsp; InputIndex</td>
+                <td>int array</td>
+                <td>○</td>
+                <td>入力データインデックス（1 ～）リスト</td>
+            </tr>
+            <tr>
+                <td>&nbsp; Converters</td>
+                <td>array</td>
+                <td>○</td>
+                <td>変換情報リスト</td>
+            </tr>
+            <tr>
+                <td>&nbsp; &nbsp; Converter</td>
+                <td>string</td>
+                <td>○</td>
+                <td>変換関数名<br>使用可能な関数は、data-cleansing ノードの説明を参照。</td>
+            </tr>
+            <tr>
+                <td>&nbsp; &nbsp; Enabled</td>
+                <td>boolean</td>
+                <td>○</td>
+                <td>有効/無効。true の場合、変換関数を適用する。</td>
+            </tr>
+            <tr>
+                <td>&nbsp; &nbsp; Options</td>
+                <td>array</td>
+                <td>○</td>
+                <td>変換オプションデータ。変換関数で必要な追加情報を指定する。</td>
+            </tr>
+        </table>
+    </ol>
+</script>

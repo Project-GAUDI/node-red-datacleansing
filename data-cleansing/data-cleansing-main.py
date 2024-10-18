@@ -7,6 +7,24 @@ import runpy
 import sys
 import types
 
+# 出力内容の名称
+OUTPUT_NAME_DATA = "data"
+OUTPUT_NAME_ERROR = "error"
+OUTPUT_NAME_PROPERTIES = "properties"
+OUTPUT_NAME_TRACE = "trace"
+
+#
+def OutputStdout(section, value):
+    output = {}
+    output[section] = value
+    print(json.dumps(output,ensure_ascii=True), file=sys.stdout)
+
+#
+def OutputStderr(section, value):
+    output = {}
+    output[section] = value
+    print(json.dumps(output,ensure_ascii=True), file=sys.stderr)
+
 #
 def LoadAddin(addinFile):
     """
@@ -86,8 +104,8 @@ def GetInputData(inputLine, properyName):
             retInputData = inputLine[properyName]
 
     except Exception as e:
-        print( f'Input data read error ({properyName}): ' + json.dumps(inputLine[properyName],ensure_ascii=True), file=sys.stderr )
-        print( e, file=sys.stderr )
+        OutputStderr(OUTPUT_NAME_ERROR, f'Input data read error ({properyName}): ' + json.dumps(inputLine[properyName],ensure_ascii=True))
+        OutputStderr(OUTPUT_NAME_ERROR, str(e))
 
     return retInputData
 
@@ -179,6 +197,7 @@ def main(inputRecord, properties):
 
     Returns:
         変換後レコード
+        変換ステータス(True:成功, False:失敗)
     """
     # 出力データ領域の作成
     outputSize = 0
@@ -187,6 +206,7 @@ def main(inputRecord, properties):
         if isinstance((ithOutputIndex),int) and (outputSize < ithOutputIndex):
             outputSize = ithOutputIndex
 
+    convStatus = True
     outputRecord = []
     if 0 < outputSize:
         outputRecord = [None] * outputSize
@@ -226,6 +246,7 @@ def main(inputRecord, properties):
                     data = convFunc(data, options)
                     traceData.add( data )
                 except Exception as e:
+                    convStatus = False
                     functionName = "Unset"
                     if 'Converter' in conv:
                         functionName = conv['Converter']
@@ -284,7 +305,7 @@ def main(inputRecord, properties):
     except Exception as e:
         raise Exception('Convert error :', e)
 
-    return outputRecord
+    return outputRecord, convStatus
 
 
 #
@@ -297,10 +318,12 @@ try:
     traceFlag = False
     if sys.argv[2].lower() == "true":
         traceFlag = True
+    dataType = sys.argv[3]
+    convErr = sys.argv[4]
 
 except Exception as e:
-    print( "Error in input parameters. arg length = " + str(len(sys.argv)) + " ,args = " + sys.argv, file=sys.stderr )
-    print( e, file=sys.stderr )
+    OutputStderr(OUTPUT_NAME_ERROR, "Error in input parameters. arg length = " + str(len(sys.argv)) + " ,args = " + sys.argv)
+    OutputStderr(OUTPUT_NAME_ERROR, str(e))
     sys.exit(1)
 
 # 参照ライブラリの追加
@@ -310,8 +333,8 @@ try:
     import lib.Tracer as Tracer
     traceData = Tracer.Tracer(traceFlag)
 except Exception as e:
-    print( "Error in importing libraries.", file=sys.stderr )
-    print( e, file=sys.stderr )
+    OutputStderr(OUTPUT_NAME_ERROR, "Error in importing libraries.")
+    OutputStderr(OUTPUT_NAME_ERROR, str(e))
     sys.exit(1)
 
 
@@ -328,8 +351,8 @@ try:
         # 変換関数辞書に統合
         dictConvFuncs.update(dictAddin)
 except Exception as e:
-    print( "Error in loading addins. ", file=sys.stderr )
-    print( e, file=sys.stderr )
+    OutputStderr(OUTPUT_NAME_ERROR, "Error in loading addins. ")
+    OutputStderr(OUTPUT_NAME_ERROR, str(e))
     # 処理可能な範囲で処理継続する為、終了しない
     # sys.exit()
 
@@ -348,12 +371,11 @@ try:
         raise Exception('')
 
     if not (CheckOutputInfo(outputInfos)):
-        print( "Illegal output information format.", file=sys.stderr )
+        OutputStderr(OUTPUT_NAME_ERROR, "Illegal output information format.")
         raise Exception('')
 
 except Exception as e:
-
-    print( "Error in output information parameter. ", file=sys.stderr )
+    OutputStderr(OUTPUT_NAME_ERROR, "Error in output information parameter. ")
     exit(1)
 
 #
@@ -369,65 +391,125 @@ try:
         properties = Props2Dict(inputData)
 
 except Exception as e:
-    print( "Properties read error. ", file=sys.stderr )
-    print( e, file=sys.stderr )    
+    OutputStderr(OUTPUT_NAME_ERROR, "Properties read error. ")
+    OutputStderr(OUTPUT_NAME_ERROR, str(e))
 
 #
 # レコード毎の処理の実施
 #
+convStatusAll = True
+output1 = []
+output2 = []
+outputnormal = output1
+outputerror = output1
+if "2" == convErr:
+    outputerror = output2
+
 for line in sys.stdin:
 
     recordDic = json.loads(line)
 
     # １レコードの変換処理
-    output = {}
+    output = ""
+    convStatusRcd = False
     try:
         # 入力データ取り出し
         inputData = GetInputData(recordDic, 'data')
         if inputData is None :
             continue
 
-        if (traceFlag):
-            traceData.pushListData("input", inputData)
+        if "GaudiMsg" == dataType:
+            # ヘッダ部の取り出し
+            recordHeader = inputData['RecordHeader']
+            if (traceFlag):
+                traceData.pushListData("input RecordHeader", recordHeader)
+
+            # データ部の取り出し
+            recordData = inputData['RecordData']
+            if (traceFlag):
+                traceData.pushListData("input RecordData", recordData)
+        elif "msg" == dataType:
+            # データ部の取り出し
+            recordData = inputData
+            if (traceFlag):
+                traceData.pushListData("input recordData", recordData)
+        else:
+            raise Exception('Type error : dataType', dataType)
 
         # 変換処理実行
-        outputRecord = main(inputData, properties)
+        outputRecord, convStatusRcd = main(recordData, properties)
         if (traceFlag):
             traceData.pushListData("output", outputRecord)
+        if True == convStatusAll and False == convStatusRcd:
+            convStatusAll = False
 
         # 出力の設定
-        output['data'] = outputRecord
+        if "GaudiMsg" == dataType:
+            output = {"Status":convStatusRcd, "Record":{"RecordHeader":recordHeader, "RecordData":outputRecord}}
+        elif "msg" == dataType:
+            output = {"Status":convStatusRcd, "Record":outputRecord}
+        else:
+            raise Exception('Type error : dataType', dataType)
 
+        # 出力用配列に設定
+        if False == convStatusRcd:
+            outputerror.append(output)
+        else:
+            outputnormal.append(output)
+        
     except Exception as e:
-        errMsg = "Convert error : " + json.dumps(inputData,ensure_ascii=True)
-        print( errMsg, file=sys.stderr )
-        print( e, file=sys.stderr )
+        convStatusRcd = False
+        convStatusAll = False
+
+        # エラーメッセージ出力
+        errMsg = "Convert error : " + json.dumps(recordData,ensure_ascii=True)
+        OutputStderr(OUTPUT_NAME_ERROR, errMsg)
+        OutputStderr(OUTPUT_NAME_ERROR, str(e))
 
         # 出力の設定
-        output['data'] = [errMsg]
+        output = {"Status":convStatusRcd, "Record":"Convert error : " + json.dumps(recordData,ensure_ascii=True)}
 
-    finally:
-        # 変換結果を出力
-        print(json.dumps(output,ensure_ascii=True))
+        # 出力用配列に設定
+        outputerror.append(output)
 
+
+# 変換結果の出力
+try:
+    if "3" == convErr and False == convStatusAll:
+        output2 = output1
+        output1 = []
+
+    for item in output1:
+        OutputStdout(OUTPUT_NAME_DATA, item)
+
+    for item in output2:
+        OutputStderr(OUTPUT_NAME_DATA, item)
+
+except Exception as e:
+    OutputStderr(OUTPUT_NAME_ERROR, "Error in output convert data : ")
+    OutputStderr(OUTPUT_NAME_ERROR, str(e))
 
 # プロパティの出力
 try:
-    output = {}
-    output['properties'] = Dict2Props(properties)
-    print(json.dumps(output,ensure_ascii=True))
+    props = Dict2Props(properties)
+    OutputStdout(OUTPUT_NAME_PROPERTIES, props)
+    OutputStderr(OUTPUT_NAME_PROPERTIES, props)
+    
     if (traceFlag):
-        traceData.push("output properties", json.dumps(output['properties'],ensure_ascii=True))
+        traceData.push("output properties", json.dumps(props,ensure_ascii=True))
 except Exception as e:
-    print( "Error in output properties : ", file=sys.stderr )
-    print( e, file=sys.stderr )
+    OutputStderr(OUTPUT_NAME_ERROR, "Error in output properties : ")
+    OutputStderr(OUTPUT_NAME_ERROR, str(e))
 
 # トレースデータの出力
 try:
     if (traceFlag):
-        print( "=== Trace data START ===", file=sys.stderr )
+        OutputStderr(OUTPUT_NAME_TRACE, "=== Trace data START ===")
         traceData.dump()
-        print( "=== Trace data END ===", file=sys.stderr )
+        for item in traceData.records: 
+            OutputStderr(OUTPUT_NAME_TRACE, item)
+        
+        OutputStderr(OUTPUT_NAME_TRACE, "=== Trace data END ===")
 except Exception as e:
-    print( "Error in output trace data : ", file=sys.stderr )
-    print( e, file=sys.stderr )
+    OutputStderr(OUTPUT_NAME_ERROR, "Error in output trace data : ")
+    OutputStderr(OUTPUT_NAME_ERROR, str(e))

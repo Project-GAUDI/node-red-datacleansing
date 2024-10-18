@@ -19,7 +19,7 @@ class converter_tester():
             resultObject = {"result": result}
             if not (json.dumps(expectedObject, ensure_ascii=True) == json.dumps(resultObject, ensure_ascii=True)):
                 testStatus = False
-                result = str(result) + " … " + unmacthMsg
+                result = str(result) + " … " + unmacthMsg + " " + str(expectedResult) + " expedted." # +  json.dumps(expectedObject, ensure_ascii=True) + json.dumps(resultObject, ensure_ascii=True)
 
         except Exception as e:
             if (expectedResult == None):
@@ -28,10 +28,10 @@ class converter_tester():
                 testStatus = False
                 result = str(e) + " … " + failedMsg
 
-        print(commonMsg + str(result), file=sys.stderr)
+        print( "Test Result = " + str(testStatus) + " : " + commonMsg + str(result), file=sys.stderr)
 
         if False == testStatus:
-            raise Exception(result)
+            raise Exception("Test Failed!!!! " + commonMsg + str(result))
             # skip
 
         return

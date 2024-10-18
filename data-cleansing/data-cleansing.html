@@ -4,7 +4,7 @@
     // ノードカテゴリの定義
     const myNodeCategory = "data cleansing";
     // ノード論理名の定義
-    const myNodeName = "data-cleansing";
+    const myNodeName = "data-cleansing2";
     // ノード表示名の定義
     const myNodeDispName = "Data Cleansing";
     // ノード色の定義
@@ -14,9 +14,12 @@
 
     // プロパティデフォルト値
     const prop_default_fmt = "format_info";
+    const prop_default_fmtid = "format";
+    const prop_default_fmtidType = "metaKey";
     const prop_default_data = "payload";
     const prop_default_dataType = "GaudiMsg";
     const prop_default_addins= {data: [{funcName:"func1",funcDescription:"func1-description",pythonCode:"def func1(input, options):\n\treturn input"}]};
+    const prop_default_cnverr = "1";
 
     // エディター内容破棄
     function disposeEditors(node) {
@@ -35,11 +38,14 @@
             name: {value:""},
             data: {value:prop_default_data, required:true},
             dataType: {value:prop_default_dataType},
-            fmtinfo: {value:prop_default_fmt, required:true},
+            fmtid: {value:prop_default_fmtid, required:true},
+            fmtidType: {value:prop_default_fmtidType},
+            fmtinfo: {value:"", type:"format-info", required:true},
             addins: {value:prop_default_addins},
             dirty: {value:true},
             editors: {value: []},    // 連想配列として宣言。(HTML上ではこの記述が可能)
             codecheck: {value: 0, required:true, validate:function(v){return (0==v)?true:false;}},
+            cnverr: {value:prop_default_cnverr},
             trace: {value:false}
         },
         inputs: 1,
@@ -120,11 +126,17 @@
                 ],
                 typeField: "#node-input-dataType"
             })
-            
-            $("#node-input-fmtinfo").typedInput({
-                type:"msg",
-                types:["msg"],
-                typeField: "#node-input-fmt-fmtinfoType"
+
+            $("#node-input-fmtid").typedInput({
+                type:"metakey",
+                types:[
+                    {
+                        value: "metaKey",
+                        label: "metaKey"
+                    },
+                    "msg"
+                ],
+                typeField: "#node-input-fmtidType"
             })
 
             $("#node-input-format-container").editableList({
@@ -330,38 +342,51 @@
 </script>
 
 <!-- ノードプロパティ編集画面 -->
-<script type="text/html" data-template-name="data-cleansing">
+<script type="text/html" data-template-name="data-cleansing2">
     <input type="hidden" id="node-input-addins">
     <input type="hidden" id="node-input-dirty">
     <input type="hidden" id="node-input-codecheck">
 
     <div class="form-row">
         <label for="node-input-name" style="width:150px;"><i class="fa fa-tag"></i>名前</label>
-        <input type="text" id="node-input-name" placeholder="data cleansing">
+        <input type="text" id="node-input-name" style="width:300px" placeholder="data cleansing">
     </div>
     <div class="form-row">
         <label for="node-input-data" style="width:150px;"><i class="fa fa-tag"></i>入力</label>
-        <input type="text" id="node-input-data">
+        <input type="text" id="node-input-data" style="width:300px">
         <input type="hidden" id="node-input-dataType">
     </div>
     <div class="form-row">
+        <label for="node-input-fmtid" style="width:150px;"><i class="fa fa-tag"></i>入力(フォーマットID)</label>
+        <input type="text" id="node-input-fmtid" style="width:300px">
+        <input type="hidden" id="node-input-fmtidType">
+    </div>
+    <div class="form-row">
         <label for="node-input-fmtinfo" style="width:150px;"><i class="fa fa-tag"></i>フォーマット情報</label>
-        <input type="text" id="node-input-fmtinfo">
+        <input type="text" id="node-input-fmtinfo" style="width:300px">
         <input type="hidden" id="node-input-fmtinfoType">
     </div>
     <div class="form-row node-input-format-container-row">
-        <ol id="node-input-format-container" style="min-height: 150px;min-width: 400px;"></ol>
+        <ol id="node-input-format-container" style="min-height: 150px;min-width: 500px;"></ol>
+    </div>
+    <div class="form-row">
+        <label for="node-input-cnverr" style="width:150px;"><i class="fa fa-exchange"></i> 変換エラー処理</label>
+        <select name="node-input-cnverr" id="node-input-cnverr" style="width:200px">
+            <option value="1">データカラムに埋め込み</option>
+            <option value="2">レコードをエラー出力</option>
+            <option value="3">メッセージをエラー出力</option>
+        </select>
     </div>
     <div class="form-row">
         <label for="node-input-trace" style="width:150px;"><i class="fa fa-bug"></i>トレース</label>
-        <label for="node-input-trace" style="width:70%">
+        <label for="node-input-trace" style="width:150px">
         <input type="checkbox" id="node-input-trace" style="display:inline-block; width:22px; vertical-align:top;">出力２に出力
         </label>
     </div>
 </script>
 
 <!-- ノードヘルプ -->
-<script type="text/html" data-help-name="data-cleansing">
+<script type="text/html" data-help-name="data-cleansing2">
     <p>データのクレンジング（抽出・変換）を行う。</p>
     <h3>入力</h3>
     <dl class="message-properties">
@@ -377,10 +402,21 @@
         </ul>
     </dl>
     <dl class="message-properties">
+        <dt>入力(フォーマットID)<span class="property-type">文字列</span></dt>
+        <dd>取得対象のフォーマットIDを指定する。</dd>
+        <ul>
+            <li>metaKeyタイプ指定時</li>
+            <dd>msg.properties.propertyList から取得するオブジェクトのkey値を指定する。</dd>
+
+            <li>msgタイプ指定時</li>
+            <dd>msgのプロパティを直接指定する。</dd>
+        </ul>
+    </dl>
+    <dl class="message-properties">
         <dt>フォーマット情報
             <span class="property-type">文字列</span>
         </dt>
-        <dd>変換対象データのクレンジング内容を定義したフォーマット情報を指定する。</dd>
+        <dd>変換対象データのクレンジング内容を定義したフォーマット情報が含まれるグローバル設定ノードを指定する。</dd>
     </dl>
     <dl class="message-properties">
         <dt>関数名
@@ -402,6 +438,27 @@
         <dd>関数名で指定した名称の関数定義の記述が必要。</dd>
     </dl>
     <dl class="message-properties">
+        <dt>変換エラー処理
+            <span class="property-type">リスト</span>
+        </dt>
+        <dd>変換に失敗したデータが存在する場合の出力方法を選択する。</dd>
+        <ul>
+            <li>データカラムに埋め込み</li>
+            <dd>出力１:変換に成功したデータと失敗したデータを出力する<br>出力２:なし</dd>
+            <li>レコードをエラー出力</li>
+            <dd>出力１:変換に成功したデータを出力する<br>出力２:変換に失敗したデータを出力する</dd>
+            <li>メッセージをエラー出力</li>
+            <ul>
+                <li>変換が全て成功した場合</li>
+                <dd>出力１:変換に成功したデータを出力する<br>出力２:なし</dd>
+            </ul>
+            <ul>
+                <li>変換に失敗したデータが1つ以上存在する場合</li>
+                <dd>出力１:なし<br>出力２:変換に成功したデータと失敗したデータを出力する</dd>
+            </ul>
+        </ul>
+    </dl>
+    <dl class="message-properties">
         <dt>トレース
             <span class="property-type">フラグ</span>
         </dt>
@@ -411,17 +468,303 @@
 
     <h3>出力</h3>
     <ol class="node-ports">
-        <li>クレンジング結果
+        <li>変換結果(変換エラーがない場合)
             <dl class="message-properties">
                 <dt>msg["入力"]<span class="property-type">GAUDI標準メッセージ|配列</span></dt>
-                <dd>クレンジング結果を入力データと置き換えて出力する。</dd>
+                <dd>変換結果を入力データと置き換えて出力１から出力する。</dd>
             </dl>
         </li>
-        <li>エラー出力／トレース出力
+        <li>変換結果(変換エラーがある場合)
             <dl class="message-properties">
-                <dt>payload<span class="property-type">配列</span></dt>
-                <dd>処理中に発生したエラーの情報および変換過程のトレース情報を出力する。</dd>
+                <dt>msg["入力"]<span class="property-type">GAUDI標準メッセージ|配列</span></dt>
+                <dd>変換エラー情報を入力データと置き換えて出力する。</dd>
+                <dd>「変換エラー処理」の設定内容によって出力先が異なる。</dd>
+                <table>
+                    <tr>
+                        <td>変換エラー処理設定</td>
+                        <td>変換成功のレコードデータ出力先</td>
+                        <td>変換エラーのレコードデータ出力先</td>
+                    </tr>
+                    <tr>
+                        <td>データカラムに埋め込み</td>
+                        <td>出力１</td>
+                        <td>出力１</td>
+                    </tr>
+                    <tr>
+                        <td>レコードをエラー出力</td>
+                        <td>出力１</td>
+                        <td>出力２</td>
+                    </tr>
+                    <tr>
+                        <td>メッセージをエラー出力</td>
+                        <td>出力２</td>
+                        <td>出力２</td>
+                    </tr>
+                </table>
             </dl>
         </li>
+        <li>変換エラーのレコード番号出力
+            <dl class="message-properties">
+                <dt>converrorindex<span class="property-type">配列</span></dt>
+                <dd>変換エラーのレコード番号を出力する。</dd>
+            </dl>
+        </li>
+        <li>エラー出力
+            <dl class="message-properties">
+                <dt>error<span class="property-type">配列</span></dt>
+                <dd>処理中に発生したエラーの情報を出力する。</dd>
+                <table>
+                    <tr>
+                        <td>分類</td>
+                        <td>出力先</td>
+                        <td>発生例</td>
+                    </tr>
+                    <tr>
+                        <td>設定エラー</td>
+                        <td>例外</td>
+                        <td>ノードプロパティに未設定の項目がある<br>ノードプロパティで指定したメッセージプロパティがない<br>受信したメッセージの形式がノードプロパティで選択した形式と一致しない<br>ノードプロパティで指定したフォーマットIDがグローバル設定ノードに未定義</td>
+                    </tr>
+                    <tr>
+                        <td>フォーマット情報エラー</td>
+                        <td>出力２</td>
+                        <td>フォーマット情報に不備がある</td>
+                    </tr>
+                    <tr>
+                        <td>定義関数エラー</td>
+                        <td>出力２</td>
+                        <td>ユーザ定義関数内のコンパイルエラー<br>定義関数の実行時エラー</td>
+                    </tr>
+                </table>
+            </dl>
+        </li>
+        <li>トレース出力
+            <dl class="message-properties">
+                <dt>trace<span class="property-type">配列</span></dt>
+                <dd>変換過程のトレース情報を出力２から出力する。</dd>
+            </dl>
+        </li>
+    </ol>
+
+    <h3>使用可能な変換関数</h3>
+    <ol class="convert-functions">
+        <table>
+            <tr>
+                <td>論理名</td>
+                <td>物理名</td>
+                <td>機能</td>
+                <td>入力</td>
+                <td>オプション</td>
+            </tr>
+            <tr>
+                <td>日時データ結合</td>
+                <td>UnionDate</td>
+                <td>入力の３データをそれぞれ、int 変換 →byte 分割 → 再連結した後に年月・日時・分秒のデータとして連結した日時データ文字列にする。<br>出力形式は、"YYYY/MM/DD hh:mm:ss"の形式となる。</td>
+                <td>[0]~[2]:２バイト INT</td>
+                <td>なし</td>
+            </tr>
+            <tr>
+                <td>日時データ結合_swap</td>
+                <td>UnionDateSwap</td>
+                <td>入力の３データをそれぞれ、int 変換 →byte 分割 →swap→ 再連結した後に年月・日時・分秒のデータとして連結した日時データ文字列にする。<br>出力形式は、"YYYY/MM/DD hh:mm:ss"の形式となる。</td>
+                <td>[0]~[2]:２バイト INT</td>
+                <td>なし</td>
+            </tr>
+            <tr>
+                <td>日時データ結合_12桁形式</td>
+                <td>UnionDateF12</td>
+                <td>入力の３データをそれぞれ、int変換→byte分割→再連結した後に年月・日時・分秒のデータとして連結した日時データ文字列にする。<br>出力形式は、"YYMMDDhhmmss"の形式となる。</td>
+                <td>[0]~[2]:２バイトINT</td>
+                <td>なし</td>
+            </tr>
+            <tr>
+                <td>日時データ結合_12桁形式swap</td>
+                <td>UnionDateF12Swap</td>
+                <td>入力の３データをそれぞれ、byte分割→swap再連結した後に年月・日時・分秒のデータとして連結した日時データ文字列にする。<br>出力形式は、"YYMMDDhhmmss"の形式となる。</td>
+                <td>[0]~[2]:２バイトINT</td>
+                <td>なし</td>
+            </tr>
+            <tr>
+                <td>日付データ書式変換</td>
+                <td>DateFormat</td>
+                <td>入力の日付形式文字列を日付データに変換後、指定された書式の文字列に再変換する。（Date2DateF12の下位関数）<br>※fff部は、マイクロ秒として取り込み、出力する。</td>
+                <td>[日付形式文字列]<br>"YYYY/MM/DDhh:mm:ss.fff"形式</td>
+                <td>[変換書式]<br>変換書式：Pythonの書式形式で指定。省略可能。<br>デフォルト＝"%y%m%d%H%M%S"</td>
+            </tr>
+            <tr>
+                <td>日付データ書式変換_12桁形式</td>
+                <td>Date2DateF12</td>
+                <td>入力の日付形式文字列を日付データに変換後、"YYMMDDhhmmss"の形式の文字列に再変換する。</td>
+                <td>[日付形式文字列]<br>"YYYY/MM/DDhh:mm:ss.fff"形式</td>
+                <td>なし</td>
+            </tr>
+            <tr>
+                <td>ISO時刻形式変換</td>
+                <td>NativeTimeToISOTime</td>
+                <td>タイムゾーン情報を持たない非ISO形式日時文字列をオプションで指定したタイムゾーンの時刻値と書式に変換する。<br>%z出力による時差表記部分は、基本的に"+0000"の形式となる。（"+00:00"の形式ではない）<br>出力データタイムゾーンにUTCを指定した場合、時差表記は、"+0000"ではなく、"Z"となる。</td>
+                <td>非ISO形式日時文字列（タイムゾーン情報なし）</td>
+                <td>[入力データタイムゾーン, 入力データフォーマット, 出力データタイムゾーン, 出力データフォーマット]<br>&nbsp; [0]: 入力データタイムゾーン<br>&nbsp; [1]: 入力データフォーマット（Pythonフォーマット形式。例："%Y-%m-%d %H:%M:%S.%f"）<br>&nbsp; [2]: 出力データタイムゾーン（省略可能。デフォルト＝"UTC"）<br>&nbsp; [3]: 出力データフォーマット（Pythonフォーマット形式。省略可能。デフォルト＝"%Y-%m-%dT%H:%M:%S.%f%z"）</td>
+            </tr>
+            <tr>
+                <td>書式変換</td>
+                <td>Format</td>
+                <td>入力データ配列をオプションで指定した書式に変換して文字列化する。</td>
+                <td>[0]~[N]:数値・文字列</td>
+                <td>[ 変換書式 ]<br>変換書式： Pythonの書式形式で指定。<br>※推奨の書式：{:書式}を入力の配列データを順にセット<br>※Python書式に従うが、インデックス指定時は０オリジンの為、注意が必要。</td>
+            </tr>
+            <tr>
+                <td>単位変換</td>
+                <td>Operation</td>
+                <td>入力データとOptions配列の先頭データをfloat変換し、掛け合わせたものを出力する。</td>
+                <td>INT</td>
+                <td>[変換倍率]<br>変換倍率：入力に掛け合わせる数値。</td>
+            </tr>
+			<tr>
+				<td>除算</td>
+				<td>Division</td>
+				<td>10進データをオプションの除数で除算する。</td>
+				<td>数値</td>
+				<td>[除数]</td>
+			</tr>
+			<tr>
+				<td>最大値取得</td>
+				<td>Max</td>
+				<td>入力データ列から最大値を取得する。</td>
+				<td>[ 数値配列 ]</td>
+				<td>なし</td>
+			</tr>
+			<tr>
+				<td>最小値取得</td>
+				<td>Min</td>
+				<td>入力データ列から最小値を取得する。</td>
+				<td>[ 数値配列 ]</td>
+				<td>なし</td>
+			</tr>
+			<tr>
+				<td>上位・下位バイト入れ替え</td>
+				<td>Swap</td>
+				<td>2byte16進データの上位・下位バイトを入れ替える。<br>４桁未満の場合は、前方を０埋めする。</td>
+				<td>１６進文字列（４桁）</td>
+				<td>なし</td>
+			</tr>
+            <tr>
+                <td>固定値設定</td>
+                <td>SetValue</td>
+                <td>Optionsで指定された値を設定する。</td>
+                <td>なし</td>
+                <td>[設定値]</td>
+            </tr>
+            <tr>
+                <td>フラグ反転</td>
+                <td>RevertFlag</td>
+                <td>0/1フラグを反転する。<br>（入力値が０の場合１を返し、それ以外は０を返す）</td>
+                <td>BOOLEAN/INT</td>
+                <td>なし</td>
+            </tr>
+			<tr>
+				<td>10進(2byte)→2進変換</td>
+				<td>DecToBit</td>
+				<td>10進(2byte)データを2進データに変換。</td>
+				<td>INT</td>
+				<td>なし</td>
+			</tr>
+			<tr>
+				<td>2進(1byte)→10進変換</td>
+				<td>BitToDec<br>(bit_to_dec)</td>
+				<td>2 進データを 10 進データに変換。（1byte 分）</td>
+				<td>2進数（文字列）</td>
+				<td>なし</td>
+			</tr>
+			<tr>
+				<td>16進(2byte)→10進変換</td>
+				<td>HexToDec</td>
+				<td>16 進データ(2byte)を 10 進データに変換。</td>
+				<td>16進数（文字列）</td>
+				<td>なし</td>
+			</tr>
+			<tr>
+				<td>10進→16進変換</td>
+				<td>DecToHex<br>(dec_to_hex)</td>
+				<td>10 進データを 16 進データに変換。（2byte）</td>
+				<td>２バイト INT</td>
+				<td>なし</td>
+			</tr>
+			<tr>
+				<td>16進(2byte)→2進変換</td>
+				<td>HexToBit</td>
+				<td>16 進(2byte)データを2進データに変換。</td>
+				<td>16進数（文字列）</td>
+				<td>なし</td>
+			</tr>
+			<tr>
+				<td>2進(1byte)→16進変換</td>
+				<td>BitToHex</td>
+				<td>2 進データを 16 進データに変換。（1byte 分）</td>
+				<td>2進数（文字列）</td>
+				<td>なし</td>
+			</tr>
+            <tr>
+                <td>ID計算</td>
+                <td>two_word_to_hour</td>
+                <td>上位・下位byteデータを16進文字化後、連結してint(2byte)化、msecからhour単位に変換。</td>
+                <td>[２バイトINT,２バイトINT]</td>
+                <td>なし</td>
+            </tr>
+            <tr>
+                <td>文字連結</td>
+                <td>Join<br>(join)</td>
+                <td>文字のリストを連結し、１文字列にする。</td>
+                <td>[文字配列]</td>
+                <td>[結合セパレータ]<br>結合セパレータ：連結する文字列間に挿入する文字。<br>省略時は、挿入しない。</td>
+            </tr>
+            <tr>
+                <td>文字列抽出</td>
+                <td>Substring<br>(substring)</td>
+                <td>文字列から一部を抽出する。</td>
+                <td>文字列</td>
+                <td>[抽出開始位置,抽出文字数]<br>抽出開始位置：切り出し開始位置。（1～）<br>負値の場合、文字列末端からの文字数となる。<br>省略時は、1。<br>抽出文字数：切り出し文字数。（1～）<br>負値の場合、元文字列長と合算した値を抽出文字数とする。<br>省略時は、末尾まで切り出し。</td>
+            </tr>
+            <tr>
+                <td>分割抽出</td>
+                <td>Split<br>(split)</td>
+                <td>文字列を指定セパレータで分解し、指定位置のデータを抽出する。</td>
+                <td>文字列</td>
+                <td>[セパレータ,抽出位置]<br>セパレータ：文字の分解に使用する文字。省略不可。<br>抽出位置：分解した文字列の配列から抜き出す位置。（1～）</td>
+            </tr>
+            <tr>
+                <td>スペース除去</td>
+                <td>Trim<br>(trim)</td>
+                <td>入力文字列全体のスペースを除去。</td>
+                <td>文字列</td>
+                <td>なし</td>
+            </tr>
+            <tr>
+                <td>バイト分割数値文字列化</td>
+                <td>change_normal</td>
+                <td>int変換→byte分割→再連結（文字列）</td>
+                <td>INT</td>
+                <td>なし</td>
+            </tr>
+            <tr>
+                <td>バイト分割数値文字列化swap</td>
+                <td>change_normal_swap</td>
+                <td>int変換→byte分割→byteスワップ→再連結（文字列）</td>
+                <td>INT</td>
+                <td>なし</td>
+            </tr>
+            <tr>
+                <td>コードキー生成</td>
+                <td>CodeKey</td>
+                <td>入力の１～３番目のデータをそれぞれ、int変換→byte分割→再連結し、全てのデータを文字列として連結する。</td>
+                <td>[0]:INT<br>[1]~[3]:２バイトINT<br>[4]:INT</td>
+                <td>なし</td>
+            </tr>
+            <tr>
+                <td>コードキー生成_swap</td>
+                <td>CodeKeySwap</td>
+                <td>入力の１～３番目のデータをそれぞれ、int変換→byte分割→swap→再連結し、全てのデータを文字列として連結する。</td>
+                <td>[0]:INT<br>[1]~[3]:２バイトINT<br>[4]:INT</td>
+                <td>なし</td>
+            </tr>
+        </table>
     </ol>
 </script>
