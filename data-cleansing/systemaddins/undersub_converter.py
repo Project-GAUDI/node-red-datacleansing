@@ -98,4 +98,4 @@ def undersub_converter_tester(input, option):
     tester.converter_test_caller("2-2-2-10", CodeKeySwap, ["1","2069","3845","12322","2"], None, "12108051534482")
     tester.converter_test_caller("2-2-2-11", CodeKeySwap, [1,2069,3845,12322], None, None)
 
-    return 0
+    return "All Test Finished Normally."

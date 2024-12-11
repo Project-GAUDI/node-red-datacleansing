@@ -1,1 +1,113 @@
-[{"id":"a47300be.3d4fa","type":"debug","z":"32200fc.94ea1f","name":"traceLog","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"payload","targetType":"msg","statusVal":"","statusType":"auto","x":840,"y":120,"wires":[]},{"id":"7ca2f02f.fa93f","type":"data-cleansing","z":"32200fc.94ea1f","name":"","data":"payload","dataType":"GaudiMsg","fmtinfo":"format_info","addins":{"data":[{"funcName":"func1","funcDescription":"func1-description","pythonCode":"def func1(input, options):\n    splitted = input.split('][')\n    stripped = [s.replace('[','').replace(']','').strip() for s in splitted]  \n    output = ','.join(stripped)\n\n    return output\n"}]},"dirty":false,"editors":[],"codecheck":0,"x":640,"y":80,"wires":[["4c126680.c64628"],["a47300be.3d4fa"]]},{"id":"4c126680.c64628","type":"debug","z":"32200fc.94ea1f","name":"","active":true,"tosidebar":true,"console":false,"tostatus":false,"complete":"payload","targetType":"msg","statusVal":"","statusType":"auto","x":850,"y":80,"wires":[]},{"id":"ec39f560.3787d8","type":"set-format-info","z":"32200fc.94ea1f","name":"","fno":"format","fnoType":"msg","fmt":"format_info","fmtinfos":{"data":[{"fno":"999","fmt":"{\"OutputData\":[{\"OutputIndex\":1,\"OutputName\":\"\",\"InputIndex\":[1],\"InputName\":[],\"Converters\":[{\"Converter\":\"func1\",\"Enabled\":true,\"Options\":[]}]}]}"}]},"x":440,"y":80,"wires":[["7ca2f02f.fa93f"]]},{"id":"6b7397e0.8cb028","type":"function","z":"32200fc.94ea1f","name":"createMsg","func":"const testValues = [\"[ABC-0800  ][2022/01/20][12345  ]\"];\n\nmsg.format = \"999\";\nmsg.payload = {\"RecordList\":[{\"RecordHeader\":[], \"RecordData\":testValues}]};\n\nreturn msg;\n","outputs":1,"noerr":0,"initialize":"","finalize":"","x":250,"y":80,"wires":[["ec39f560.3787d8"]]},{"id":"c486ee1b.d3a3c","type":"inject","z":"32200fc.94ea1f","name":"","props":[],"repeat":"","crontab":"","once":false,"onceDelay":0.1,"topic":"","x":90,"y":80,"wires":[["6b7397e0.8cb028"]]}]
+[
+    {
+        "id": "a47300be.3d4fa",
+        "type": "debug",
+        "z": "7091f55b6dde4501",
+        "name": "traceLog",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 640,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "7ca2f02f.fa93f",
+        "type": "data-cleansing2",
+        "z": "7091f55b6dde4501",
+        "name": "",
+        "data": "payload",
+        "dataType": "GaudiMsg",
+        "fmtid": "format",
+        "fmtidType": "msg",
+        "fmtinfo": "ec39f560.3787d8",
+        "addins": {
+            "data": [
+                {
+                    "funcName": "func1",
+                    "funcDescription": "func1-description",
+                    "pythonCode": "def func1(input, options):\n    splitted = input.split('][')\n    stripped = [s.replace('[','').replace(']','').strip() for s in splitted]  \n    output = ','.join(stripped)\n\n    return output\n"
+                }
+            ]
+        },
+        "dirty": false,
+        "editors": [],
+        "codecheck": 0,
+        "cnverr": "1",
+        "x": 460,
+        "y": 60,
+        "wires": [
+            [
+                "4c126680.c64628"
+            ],
+            [
+                "a47300be.3d4fa"
+            ]
+        ]
+    },
+    {
+        "id": "4c126680.c64628",
+        "type": "debug",
+        "z": "7091f55b6dde4501",
+        "name": "",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 650,
+        "y": 60,
+        "wires": []
+    },
+    {
+        "id": "6b7397e0.8cb028",
+        "type": "function",
+        "z": "7091f55b6dde4501",
+        "name": "createMsg",
+        "func": "const testValues = [\"[ABC-0800  ][2022/01/20][12345  ]\"];\n\nmsg.format = \"999\";\nmsg.payload = {\"RecordList\":[{\"RecordHeader\":[], \"RecordData\":testValues}]};\n\nreturn msg;\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 270,
+        "y": 60,
+        "wires": [
+            [
+                "7ca2f02f.fa93f"
+            ]
+        ]
+    },
+    {
+        "id": "c486ee1b.d3a3c",
+        "type": "inject",
+        "z": "7091f55b6dde4501",
+        "name": "",
+        "props": [],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 110,
+        "y": 60,
+        "wires": [
+            [
+                "6b7397e0.8cb028"
+            ]
+        ]
+    },
+    {
+        "id": "ec39f560.3787d8",
+        "type": "format-info",
+        "name": "Format Info",
+        "fmtinfos": "[{\"fno\":\"999\",\"fmt\":\"{\\\"OutputData\\\":[{\\\"OutputIndex\\\":1,\\\"OutputName\\\":\\\"\\\",\\\"InputIndex\\\":[1],\\\"InputName\\\":[],\\\"Converters\\\":[{\\\"Converter\\\":\\\"func1\\\",\\\"Enabled\\\":true,\\\"Options\\\":[]}]}]}\"}]"
+    }
+]

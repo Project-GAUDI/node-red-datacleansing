@@ -6,7 +6,7 @@
     // ノード論理名の定義
     const myNodeName = "get-format-number";
     // ノード表示名の定義
-    const myNodeDispName = "Get Format No.";
+    const myNodeDispName = "Get Format ID";
     // ノード色の定義
     const myNodeColor = "#3FADB5";
     // アイコン名の定義
@@ -61,7 +61,7 @@
 <script type="text/html" data-template-name="get-format-number">
     <div class="form-row">
         <label for="node-input-name"><i class="fa fa-tag"></i> 名前</label>
-        <input type="text" id="node-input-name" placeholder="GetFormatNumber">
+        <input type="text" id="node-input-name" placeholder="GetFormatID">
     </div>
     <div class="form-row">
         <label for="node-input-from"><i class="fa fa-tag"></i> 入力</label>
@@ -78,7 +78,7 @@
 
 <!-- ノードヘルプ -->
 <script type="text/html" data-help-name="get-format-number">
-    <p>入力プロパティにセットされたGAUDI標準フォーマットデータの先頭データのRecordHeaderからフォーマット番号を抽出し、出力プロパティに出力します。</p>
+    <p>入力プロパティにセットされたGAUDI標準フォーマットデータの先頭データのRecordHeaderからフォーマットIDを抽出し、出力プロパティに出力する。</p>
     <h3>入力</h3>
     <dl class="message-properties">
         <dt>入力</dt>
@@ -89,7 +89,7 @@
         <dd>抽出結果の出力先を指定する。</dd>
         <ul>
             <li>metaKeyタイプ指定時</li>
-            <dd>msg.properties.propertyListに{"key":出力プロパティ名, "value":抽出したフォーマット番号} のオブジェクトをセットする。入力プロパティ名のkeyを持つオブジェクトが既存の場合は更新する。</dd>
+            <dd>msg.properties.propertyListに{"key":出力プロパティ名, "value":抽出したフォーマットID} のオブジェクトをセットする。入力プロパティ名のkeyを持つオブジェクトが既存の場合は更新する。</dd>
 
             <li>msgタイプ指定時</li>
             <dd>msgのプロパティを直接指定する。</dd>
@@ -101,7 +101,7 @@
         <li>抽出結果
             <dl class="message-properties">
                 <dt></dt>
-                <dd>msg[入力プロパティ].RecordList[0].RecordHeader[0]の値を"_"で分割し、2番目の値が出力されます。</dd>
+                <dd>msg[入力プロパティ].RecordList[0].RecordHeader[0]の値を"_"で分割し、2番目の値が出力する。</dd>
             </dl>
         </li>
     </ol>
