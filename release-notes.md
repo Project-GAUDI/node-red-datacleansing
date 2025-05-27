@@ -1,5 +1,15 @@
 # Node-RED-DataCleansing Release Notes
 
+## 6.0.3
+ 
+* エラーログ出力の不具合修正
+
+## 6.0.2
+
+* data-cleansingノードの不具合対応
+  * 変換結果の出力先がpayload固定となる不具合を修正
+  * 入力メッセージの形式にGAUDI標準を選択した際に、RecordHeaderまたはRecordDataのいずれか、もしくは両方が無い場合に動作しない不具合を修正
+
 ## 6.0.1
 
 * パイプライン実行環境のvmImageのバージョン変更(20.04→22.04)

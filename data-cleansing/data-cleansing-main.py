@@ -1,4 +1,5 @@
 import ast
+import copy
 import datetime
 import glob
 import json
@@ -95,6 +96,7 @@ def GetConvertFunc(dictFuncs, funcName):
 #
 def GetInputData(inputLine, properyName):
     retInputData = None
+    retStatus = True
     try:
         if properyName in inputLine:
             # 入力フォーマット情報
@@ -106,8 +108,9 @@ def GetInputData(inputLine, properyName):
     except Exception as e:
         OutputStderr(OUTPUT_NAME_ERROR, f'Input data read error ({properyName}): ' + json.dumps(inputLine[properyName],ensure_ascii=True))
         OutputStderr(OUTPUT_NAME_ERROR, str(e))
+        retStatus = False
 
-    return retInputData
+    return retInputData, retStatus
 
 #
 def Props2Dict(properties):
@@ -171,17 +174,35 @@ def ChangeType(data):
 
 #
 def CheckOutputInfo(iOutputInfo):
-    retIsCorrectFormat = True
+    """
+    フォーマット情報の検証
+
+    Args:
+        iOutputInfo : 検証対象フォーマット情報
+
+    Returns:
+        (bool, str): (検証結果, エラーメッセージ)
+        検証OK: (True, "")
+        検証NG: (False, エラーの詳細メッセージ)
+    """
+    retIsCorrectFormat = (True,"")
 
     if not isinstance(iOutputInfo, dict):
-        retIsCorrectFormat = False
+        retIsCorrectFormat = (False,"Format info must be dictionary")
 
     elif not 'OutputData' in iOutputInfo:
-        retIsCorrectFormat = False
+        retIsCorrectFormat = (False, "OutputData not found in format info")
 
     elif not isinstance(iOutputInfo['OutputData'], list):
-        retIsCorrectFormat = False
+        retIsCorrectFormat = (False, "OutputData must be array")
 
+    # OutputDataの各要素のConverters検証
+    elif retIsCorrectFormat[0]:
+        for i, outInfo in enumerate(iOutputInfo['OutputData']):
+            if not 'Converters' in outInfo:
+                retIsCorrectFormat = (False,f"Converters not found in OutputData[{i}]")
+                break
+            
     return retIsCorrectFormat
 
 #
@@ -274,7 +295,7 @@ def main(inputRecord, properties):
                 properties[outname] = setdata
                 if (traceFlag):
                     traceData.addConvname("DataToProperty")
-                    traceData.add(outname + "=" + str(setdata))
+                    traceData.add(str(outname) + "=" + str(setdata))
 
             elif outidx == "PropertyAddOnly":
                 outname = outInfo['OutputName']
@@ -286,7 +307,7 @@ def main(inputRecord, properties):
                     properties[outname] = setdata
                     if (traceFlag):
                         traceData.addConvname("DataToProperty")
-                        traceData.add(outname + "=" + str(setdata))
+                        traceData.add(str(outname) + "=" + str(setdata))
 
             elif isinstance(outidx, int):
                 if 1 <= outidx and outidx <= len(outputRecord):
@@ -296,7 +317,7 @@ def main(inputRecord, properties):
                     if (traceFlag):
                         traceData.addConvname("DataToOutputIndex")
                         traceData.addLabel("[" + str(outidx) + "]")
-                        traceData.add(setdata)
+                        traceData.add(str(setdata))
                 else:
                     raise Exception('Out of index : OutputIndex', outidx)
             else:
@@ -364,14 +385,15 @@ try:
     line = sys.stdin.readline()
     recordDic = json.loads(line)
 
-    inputData = GetInputData(recordDic, 'formatInfo')
+    inputData, retStatus = GetInputData(recordDic, 'formatInfo')
     if not inputData is None :
         outputInfos = json.loads(inputData)
     else:
         raise Exception('')
 
-    if not (CheckOutputInfo(outputInfos)):
-        OutputStderr(OUTPUT_NAME_ERROR, "Illegal output information format.")
+    isValid, errMsg = CheckOutputInfo(outputInfos)
+    if not isValid:
+        OutputStderr(OUTPUT_NAME_ERROR, "Illegal output information format : "+ errMsg)
         raise Exception('')
 
 except Exception as e:
@@ -386,7 +408,7 @@ try:
     line = sys.stdin.readline()
     recordDic = json.loads(line)
 
-    inputData = GetInputData(recordDic, 'properties')
+    inputData, retStatus = GetInputData(recordDic, 'properties')
     if not inputData is None :
         properties = Props2Dict(inputData)
 
@@ -414,40 +436,54 @@ for line in sys.stdin:
     convStatusRcd = False
     try:
         # 入力データ取り出し
-        inputData = GetInputData(recordDic, 'data')
-        if inputData is None :
+        inputData, retStatus = GetInputData(recordDic, 'data')
+        if False == retStatus:
             continue
 
         if "GaudiMsg" == dataType:
-            # ヘッダ部の取り出し
-            recordHeader = inputData['RecordHeader']
-            if (traceFlag):
-                traceData.pushListData("input RecordHeader", recordHeader)
-
             # データ部の取り出し
-            recordData = inputData['RecordData']
-            if (traceFlag):
+            if inputData is None:
+                recordData = None
                 traceData.pushListData("input RecordData", recordData)
+            elif 'RecordData' in inputData:
+                recordData = copy.deepcopy(inputData['RecordData'])
+                traceData.pushListData("input RecordData", recordData)
+            else:
+                # RecordDataが存在しない場合は、変換処理をスキップするように設定
+                recordData = None
+                traceData.push( "input RecordData", "None" )
         elif "msg" == dataType:
             # データ部の取り出し
-            recordData = inputData
-            if (traceFlag):
+            if inputData is None:
+                recordData = None
+                traceData.push( "input RecordData", "None" )
+            else:
+                recordData = copy.deepcopy(inputData)
                 traceData.pushListData("input recordData", recordData)
         else:
             raise Exception('Type error : dataType', dataType)
 
         # 変換処理実行
-        outputRecord, convStatusRcd = main(recordData, properties)
-        if (traceFlag):
+        if recordData is None:
+            # スキップは成功扱いとする
+            convStatusRcd = True
+            traceData.push("skip convert")
+        else:
+            outputRecord, convStatusRcd = main(recordData, properties)
             traceData.pushListData("output", outputRecord)
+
         if True == convStatusAll and False == convStatusRcd:
             convStatusAll = False
 
         # 出力の設定
+        output = {"Status":convStatusRcd, "Record":inputData}
         if "GaudiMsg" == dataType:
-            output = {"Status":convStatusRcd, "Record":{"RecordHeader":recordHeader, "RecordData":outputRecord}}
+            if not recordData is None:
+                # 変換を実施した場合は結果を更新
+                output["Record"]["RecordData"] = outputRecord
         elif "msg" == dataType:
-            output = {"Status":convStatusRcd, "Record":outputRecord}
+            if not recordData is None:
+                output["Record"] = outputRecord
         else:
             raise Exception('Type error : dataType', dataType)
 
@@ -467,7 +503,16 @@ for line in sys.stdin:
         OutputStderr(OUTPUT_NAME_ERROR, str(e))
 
         # 出力の設定
-        output = {"Status":convStatusRcd, "Record":"Convert error : " + json.dumps(recordData,ensure_ascii=True)}
+        if "GaudiMsg" == dataType:
+            output = {"Status":convStatusRcd, "Record":inputData}
+            # inputDataにRecordDataの有無によらずエラーをセットすべきだが、v1.0.3までの出力仕様に合わせるため、RecordData有りの場合のみセット
+            if 'RecordData' in inputData:
+                output["Record"]["RecordData"] = [errMsg]
+        elif "msg" == dataType:
+            output = {"Status":convStatusRcd, "Record":[errMsg]}
+        else:
+            # ここは通らないはず
+            output = {"Status":convStatusRcd, "Record":[errMsg]}
 
         # 出力用配列に設定
         outputerror.append(output)

@@ -12,19 +12,17 @@ module.exports = function(RED) {
         // GAUDI標準フォーマットのRecordHeader（先頭レコード）からからフォーマット番号を取得
         try {
 
+            // msgプロパティを設定
+            if ( false == ("properties" in msg) ) {
+                msg["properties"] =  {propertyList:[], count:function(){return this.propertyList.length;} };
+            };
+            if ( false == ("propertyList" in msg.properties) ) {
+                msg.properties["propertyList"] = [];
+            }
+
             var propfromname = input_props["from"];
             var proptoname = input_props["to"];
             var proptotype = input_props["toType"];
-
-            // msgプロパティの枠を設定
-            if ("metaKey" == proptotype) {
-                if ( false == ("properties" in msg) ) {
-                    msg["properties"] =  {};
-                };
-                if ( false == ("propertyList" in msg.properties) ) {
-                    msg.properties["propertyList"] = [];
-                }
-            }
 
             // 入力元・出力先が空欄の場合エラー (読み込み時は参照エラー、書き出し時は空欄で書き出せてしまう)
             if ("" == propfromname) {
@@ -76,8 +74,8 @@ module.exports = function(RED) {
 
         } catch (ex) {
             // ログを出力
-            var output_msg = "Error : Get format number failed. " + ex.message;
-            node.error( output_msg );
+            var output_msg = "Get format number failed. " + ex.message;
+            node.log( "get-format-number.on_msg_input Error : "+ output_msg );
             node.trace("Exit Method: get-format-number.on_msg_input");
             throw new Error(output_msg);
         }
