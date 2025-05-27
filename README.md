@@ -277,7 +277,7 @@ node-red-datacleansingは、下記処理を行うNode-REDのカスタムノー�
 
     [出力１のメッセージ]
 
-    ```json
+    ```
     {
       "payload": [
         ["2", "6"],
@@ -319,7 +319,7 @@ node-red-datacleansingは、下記処理を行うNode-REDのカスタムノー�
 
     [出力２のメッセージ]
 
-    ```json
+    ```
     {
       "payload": [
         ["B", <エラー情報>]
@@ -380,7 +380,7 @@ node-red-datacleansingは、下記処理を行うNode-REDのカスタムノー�
       
       [出力２のメッセージ]
 
-      ```json
+      ```
       {
         "payload": [
           ["2", "6"],
@@ -397,7 +397,7 @@ node-red-datacleansingは、下記処理を行うNode-REDのカスタムノー�
 
   [出力２のメッセージ]
 
-  ```json
+  ```
   {
     "trace": [
       "=== Trace data START ===",
@@ -423,16 +423,16 @@ node-red-datacleansingは、下記処理を行うNode-REDのカスタムノー�
   [設定エラー]
   <br>errorプロパティにエラー情報オブジェクトを出力する。
 
-  ```json
+  ```
   {
-    "error": {<エラー情報>}
+    "error": {'<エラー情報>'}
   }
   ```
 
   [フォーマット情報エラー/定義関数エラー]
   <br>errorプロパティにエラー情報文字列の配列を出力する。
 
-  ```json
+  ```
   {
     "error": [
       <エラー情報１>,
@@ -445,7 +445,7 @@ node-red-datacleansingは、下記処理を行うNode-REDのカスタムノー�
   [変換エラー]
   <br>出力データのデータカラムにエラー情報オブジェクトを出力する。<br>converrorindexプロパティに変換エラーのレコード番号の配列を出力する。
 
-  ```json
+  ```
   {
     "payload": [
       ["2", "6"],
