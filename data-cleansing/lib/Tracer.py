@@ -27,15 +27,20 @@ class Tracer:
         if (not self.outputFlag):
             return
 
-        """ トレース出力用レコードとしてリストデータを追加 """
-        self.push(label, "[ ")
-        separater = ""
-        for dat in inputData:
-            self.add(separater)
-            self.add(str(dat))
-            separater=", "
-        
-        self.add(" ]")
+        if inputData is None:
+            self.push(label, "None")
+        elif not isinstance(inputData, list):
+            self.push(label, inputData)
+        else:
+            """ トレース出力用レコードとしてリストデータを追加 """
+            self.push(label, "[ ")
+            separater = ""
+            for dat in inputData:
+                self.add(separater)
+                self.add(str(dat))
+                separater=", "
+            
+            self.add(" ]")
 
     def add(self, data):
         if (not self.outputFlag):
@@ -52,7 +57,7 @@ class Tracer:
             return
 
         """ 最新トレース出力用レコードにデータを追加 """
-        self.addData(label + ":")
+        self.addData(str(label) + ":")
 
     def addData(self, data):
         if (not self.outputFlag):
@@ -65,22 +70,27 @@ class Tracer:
         if (not self.outputFlag):
             return
 
-        """ 最新トレース出力用レコードにデータを追加 """
-        self.addData("[")
-        separater = ""
-        for dat in data:
-            self.addData(separater)
-            self.addData(str(dat))
-            separater=", "
-        
-        self.addData("]")
+        if data is None:
+            self.addData("None")
+        elif not isinstance(data, list):
+            self.addData(data)
+        else:
+            """ 最新トレース出力用レコードにデータを追加 """
+            self.addData("[")
+            separater = ""
+            for dat in data:
+                self.addData(separater)
+                self.addData(str(dat))
+                separater=", "
+            
+            self.addData("]")
 
     def addConvname(self, converterName, option = "" ):
         if (not self.outputFlag):
             return
 
         """ 最新トレース出力用レコードにデータを追加 """
-        self.records[-1] += " --(" + converterName + "(" + str(option) + ") )--> "
+        self.records[-1] += " --(" + str(converterName) + "(" + str(option) + ") )--> "
 
     def dump(self):
         if (not self.outputFlag):

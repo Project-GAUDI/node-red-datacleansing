@@ -58,8 +58,8 @@ module.exports = function(RED) {
             removeTempFolder( node.id );
             node.log("removeTempFolder succeeded.");
         } catch (ex) {
-            var err = "Error : Removing templary folder failed. (" + ex.message + ")";
-            node.log(err);        // エラーをthrowしているので、infoレベルで出力
+            var err = "Removing templary folder failed. (" + ex.message + ")";
+            node.log("data-cleansing.on_node_close Error : "+ err);        // エラーをthrowしているので、infoレベルで出力
             node.trace("Exit Method: data-cleansing.on_node_close");
             throw new Error(err);
         }
@@ -137,8 +137,8 @@ module.exports = function(RED) {
             executePython( node, dataType, data, msg, fmtInfo, cnvErr, [addinFolders, traceFlag.toString(), dataType, cnvErr] );
 
         } catch (ex) {
-            var err = "Error : Data cleansing failed. (" + ex.message + ")";
-            node.log(err);        // エラーをthrowしているので、infoレベルで出力
+            var err = "Data cleansing failed. (" + ex.message + ")";
+            node.log("data-cleansing.on_msg_input Error : "+ err);        // エラーをthrowしているので、infoレベルで出力
             node.trace("Exit Method: data-cleansing.on_msg_input");
             throw new Error(err);
         }   
@@ -221,7 +221,7 @@ module.exports = function(RED) {
                 }
                 else {
                     var err = fmtidpropname + " property not found.";
-                    node.log(err);        // エラーをthrowしているので、infoレベルで出力
+                    node.log("data-cleansing.getDataCleansingFormatInfo Error : "+ err);        // エラーをthrowしているので、infoレベルで出力
                     node.trace("Exit Method: data-cleansing.getDataCleansingFormatInfo");
                     throw new Error(err);
                 }
@@ -236,7 +236,7 @@ module.exports = function(RED) {
                 } else {
                     // 見つからないのでエラー
                     var err = fmtidpropname + " meta key not found.";
-                    node.log(err);        // エラーをthrowしているので、infoレベルで出力
+                    node.log("data-cleansing.getDataCleansingFormatInfo Error : "+err);        // エラーをthrowしているので、infoレベルで出力
                     node.trace("Exit Method: data-cleansing.getDataCleansingFormatInfo");
                     throw new Error(err);
                 }
@@ -245,10 +245,16 @@ module.exports = function(RED) {
         node.debug("fmtId : " + fmtId);
 
         var fmtInfo = "";
-        fmtInfo = node.node_fmtinfo.getFormatInfo(fmtId);
+        try{
+            fmtInfo = node.node_fmtinfo.getFormatInfo(fmtId);
+        }catch(e){
+            node.log("data-cleansing.getDataCleansingFormatInfo Error : "+ e.message)
+            node.trace("Exit Method: data-cleansing.getDataCleansingFormatInfo");
+            throw new Error(e.message);
+        }
         if ( null == fmtInfo ) {
             var err = "format id (" + fmtId + ") not found.";
-            node.log(err);        // エラーをthrowしているので、infoレベルで出力
+            node.log("data-cleansing.getDataCleansingFormatInfo Error : " + err);        // エラーをthrowしているので、infoレベルで出力
             node.trace("Exit Method: data-cleansing.getDataCleansingFormatInfo");
             throw new Error(err);
         }
@@ -285,7 +291,7 @@ module.exports = function(RED) {
 
         // msgプロパティを設定
         if ( false == ("properties" in msg) ) {
-            msg["properties"] =  {};
+            msg["properties"] =  {propertyList:[], count:function(){return this.propertyList.length;} };
         };
         if ( false == ("propertyList" in msg.properties) ) {
             msg.properties["propertyList"] = [];
@@ -310,9 +316,9 @@ module.exports = function(RED) {
                 }
                 break;
             case "msg":
-                if (!isArray(msg.payload)) {
-                    var err = "Payload must be array.";
-                    node.log(err);        // エラーをthrowしているので、infoレベルで出力
+                if (!isArray(msg[data])) {
+                    var err = data + " must be array.";
+                    node.log("data-cleansing.executePython Error : " + err);        // エラーをthrowしているので、infoレベルで出力
                     node.trace("Exit Method: data-cleansing.executePython");
                     throw new Error(err);
                 }
@@ -358,18 +364,18 @@ module.exports = function(RED) {
                 var errDataList = [];
                 switch (dataType) {
                     case "GaudiMsg":
-                        output1_msg.payload={RecordList: []};
-                        outputDataList=output1_msg.payload.RecordList;
+                        output1_msg[data].RecordList=[];
+                        outputDataList=output1_msg[data].RecordList;
 
-                        output2_msg.payload={RecordList: []};
-                        errDataList=output2_msg.payload.RecordList;
+                        output2_msg[data].RecordList=[];
+                        errDataList=output2_msg[data].RecordList;
                         break;
                     case "msg":
-                        output1_msg.payload=[];
-                        outputDataList=output1_msg.payload;
+                        output1_msg[data]=[];
+                        outputDataList=output1_msg[data];
 
-                        output2_msg.payload=[];
-                        errDataList=output2_msg.payload;
+                        output2_msg[data]=[];
+                        errDataList=output2_msg[data];
                         break;
                 }
 
