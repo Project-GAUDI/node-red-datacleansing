@@ -58,23 +58,24 @@ module.exports = function(RED) {
                             node.debug("isArray : " + isArray(fmtInfo.OutputData).toString());
                             // fmtInfo.OutputDataが配列でない場合
                             if (!isArray(fmtInfo.OutputData)) {
-                                node.error("OutputData is not an Array.");
-                                throw new Error("OutputData is not array.");
+                                node.log("format-info.getFormatInfo Error : OutputData is not an Array.");
+                                throw new Error("OutputData is not an Array.");
                             }
         
                             for ( var outInfo of fmtInfo.OutputData ) {
                                 if ( "Converters" in outInfo ) {
                                     // outInfo.Convertersが配列でない場合
                                     if (!isArray(outInfo.Converters)) {
-                                        node.error("Converters is not an Array.");
-                                        throw new Error("Converters is not array.");
+                                        node.log("format-info.getFormatInfo Error : Converters is not an Array.");
+                                        throw new Error("Converters is not an Array.");
                                     }
             
                                     // Convertersの"Enabled":falseのデータは不要なので除去する。(trueのみのリストにする)
                                     var tmpList = [];
                                     for ( var cnvInfo of outInfo.Converters ) {
                                         if ( "Enabled" in cnvInfo ) {
-                                            if (cnvInfo.Enabled === true) {
+                                            // truthyな値を全てtrue扱いとするため、"=="で判定する。
+                                            if (cnvInfo.Enabled == true) {
                                                 tmpList.push(cnvInfo);
                                             }
                                         }
@@ -93,8 +94,7 @@ module.exports = function(RED) {
     
                 }
                 catch (e){
-                    node.error( "getFormatInfo failed : " + e);
-                    retInfo = null;
+                    throw new Error("getFormatInfo failed : " + e.message)
                 }
     
             }
