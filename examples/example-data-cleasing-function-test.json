@@ -1,8 +1,8 @@
 [
     {
-        "id": "a47300be.3d4fa",
+        "id": "858acbf9a93a8287",
         "type": "debug",
-        "z": "7091f55b6dde4501",
+        "z": "ee5428a81c4b7904",
         "name": "traceLog",
         "active": true,
         "tosidebar": true,
@@ -17,15 +17,15 @@
         "wires": []
     },
     {
-        "id": "7ca2f02f.fa93f",
+        "id": "452e75deb249321a",
         "type": "data-cleansing2",
-        "z": "7091f55b6dde4501",
+        "z": "ee5428a81c4b7904",
         "name": "",
         "data": "payload",
         "dataType": "GaudiMsg",
         "fmtid": "format",
         "fmtidType": "msg",
-        "fmtinfo": "ec39f560.3787d8",
+        "fmtinfo": "1b94f6e17fb1563b",
         "addins": {
             "data": [
                 {
@@ -35,25 +35,25 @@
                 }
             ]
         },
-        "dirty": false,
         "editors": [],
         "codecheck": 0,
         "cnverr": "1",
+        "trace": false,
         "x": 460,
         "y": 60,
         "wires": [
             [
-                "4c126680.c64628"
+                "abe163d9f6065da6"
             ],
             [
-                "a47300be.3d4fa"
+                "858acbf9a93a8287"
             ]
         ]
     },
     {
-        "id": "4c126680.c64628",
+        "id": "abe163d9f6065da6",
         "type": "debug",
-        "z": "7091f55b6dde4501",
+        "z": "ee5428a81c4b7904",
         "name": "",
         "active": true,
         "tosidebar": true,
@@ -68,9 +68,9 @@
         "wires": []
     },
     {
-        "id": "6b7397e0.8cb028",
+        "id": "c6254b19dc6109d5",
         "type": "function",
-        "z": "7091f55b6dde4501",
+        "z": "ee5428a81c4b7904",
         "name": "createMsg",
         "func": "const testValues = [\"[ABC-0800  ][2022/01/20][12345  ]\"];\n\nmsg.format = \"999\";\nmsg.payload = {\"RecordList\":[{\"RecordHeader\":[], \"RecordData\":testValues}]};\n\nreturn msg;\n",
         "outputs": 1,
@@ -81,14 +81,14 @@
         "y": 60,
         "wires": [
             [
-                "7ca2f02f.fa93f"
+                "452e75deb249321a"
             ]
         ]
     },
     {
-        "id": "c486ee1b.d3a3c",
+        "id": "1110fb5b6e3080eb",
         "type": "inject",
-        "z": "7091f55b6dde4501",
+        "z": "ee5428a81c4b7904",
         "name": "",
         "props": [],
         "repeat": "",
@@ -100,12 +100,12 @@
         "y": 60,
         "wires": [
             [
-                "6b7397e0.8cb028"
+                "c6254b19dc6109d5"
             ]
         ]
     },
     {
-        "id": "ec39f560.3787d8",
+        "id": "1b94f6e17fb1563b",
         "type": "format-info",
         "name": "Format Info",
         "fmtinfos": "[{\"fno\":\"999\",\"fmt\":\"{\\\"OutputData\\\":[{\\\"OutputIndex\\\":1,\\\"OutputName\\\":\\\"\\\",\\\"InputIndex\\\":[1],\\\"InputName\\\":[],\\\"Converters\\\":[{\\\"Converter\\\":\\\"func1\\\",\\\"Enabled\\\":true,\\\"Options\\\":[]}]}]}\"}]"

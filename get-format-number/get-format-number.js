@@ -36,21 +36,14 @@ module.exports = function(RED) {
             var recordHeader = msg[propfromname].RecordList[0].RecordHeader[0];
             var splitedList = [];
 
-            try {
-                splitedList = recordHeader.split("_");
-            }
-            catch (ex) {
-                throw new Error("RecordHeader not found.");
-            }
-
             var formatNo = "";
-            if (splitedList.length < 2) {
-                throw new Error("RecordHeader need format no after '_'");
-            }
-            else {
-                formatNo = splitedList[1];
+
+            let pattern = new RegExp("^[0-9a-zA-Z]{3}_(?<format>[0-9a-zA-Z]{3,4})_(?<country>[0-9a-zA-Z]{2})(?<company>[0-9a-zA-Z]{2})(?<factory>[0-9a-zA-Z]{3})(?<data_type>[0-9a-zA-Z]{3})(?<free_area>[0-9a-zA-Z]{5})_.+\\.(C|c)(S|s)(V|v)");
+            if(false==pattern.test(recordHeader)){
+                throw new Error("Target format is invalid.");
             }
 
+            formatNo = pattern.exec(recordHeader).groups.format;
 
             switch (proptotype) {
                 case "msg":

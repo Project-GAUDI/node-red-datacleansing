@@ -37,8 +37,13 @@
         },
         oneditprepare: function() {
             $("#node-input-from").typedInput({
-                type:"msg",
-                types:["msg"],
+                type:"GAUDIMsg",
+                types:[
+                    {
+                        value:"GAUDIMsg",
+                        label:"GAUDI msg."
+                    }
+                ],
                 typeField: "#node-input-from-type"
             })
             $("#node-input-to").typedInput({
