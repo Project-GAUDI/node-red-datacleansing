@@ -311,6 +311,12 @@ module.exports = function(RED) {
         var targetDataList = [];
         switch (dataType) {
             case "GaudiMsg":
+                if (!isArray(msg[data].RecordList)) {
+                    var err = "RecordList must be array.";
+                    node.log("data-cleansing.executePython Error : " + err);        // エラーをthrowしているので、infoレベルで出力
+                    node.trace("Exit Method: data-cleansing.executePython");
+                    throw new Error(err);
+                }
                 for ( var record of msg[data].RecordList ) {
                     targetDataList.push(record);
                 }

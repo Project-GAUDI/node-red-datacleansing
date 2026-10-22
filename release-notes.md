@@ -1,7 +1,24 @@
 # Node-RED-DataCleansing Release Notes
 
+## 7.0.0
+
+* 機能改善
+  * ライブラリを最新化
+    * python-shell(5.0.0)
+* Node-RED-Templateの反映(ver7.0.0)
+
+## 6.1.0
+
+* 課題対応
+  * フォーマット情報リストのチェックを強化
+  * ノードプロパティのメッセージタイプ：GAUDI標準形式の表記を統一
+  * DataCleansingの使用例に定義済み変換関数を使用した場合を追加
+  * 仕様書修正
+    * フォーマット情報表修正
+* Node-RED-Templateの反映(ver6.1.0)
+
 ## 6.0.3
- 
+
 * エラーログ出力の不具合修正
 
 ## 6.0.2

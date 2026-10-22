@@ -1,6 +1,9 @@
 // テストヘルパ取り込み
 var helper = require("node-red-node-test-helper");
 
+// should.js取り込み
+require('should');
+
 // テスト対象lib取り込み
 var getFormatNumberLib = require("../../get-format-number/get-format-number.js");
 
