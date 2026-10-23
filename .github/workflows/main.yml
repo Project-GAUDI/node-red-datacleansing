@@ -29,10 +29,9 @@ jobs:
     - name: Set Node.js version
       uses: actions/setup-node@v4
       with:
-        node-version: '22'
+        node-version: '24'
         registry-url: 'https://npm.pkg.github.com/'
         scope: '@project-gaudi'
-        always-auth: true
         token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: install dependencies
