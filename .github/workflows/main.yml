@@ -5,12 +5,16 @@ on:
     branches:
       - main
       - develop
+  pull_request:
+    branches:
+      - main
+      - develop
 
 jobs:
   setup-and-install:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         fetch-depth: 0
 
@@ -25,7 +29,7 @@ jobs:
     - name: Set Node.js version
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '22'
         registry-url: 'https://npm.pkg.github.com/'
         scope: '@project-gaudi'
         always-auth: true

@@ -1,6 +1,6 @@
 {
     "name": "node-red-datacleansing",
-    "version": "2.0.0",
+    "version": "7.0.0",
     "description": "",
     "author": "",
     "license": "ISC",
@@ -16,5 +16,14 @@
     },
     "scripts": {
         "test": "mocha --recursive ./test"
+    },
+    "dependencies": {
+        "python-shell": "^5.0.0"
+    },
+    "devDependencies": {
+        "mocha": "^11.7.6",
+        "should": "^13.2.3",
+        "node-red": "5.0.1",
+        "node-red-node-test-helper": "^0.3.6"
     }
 }

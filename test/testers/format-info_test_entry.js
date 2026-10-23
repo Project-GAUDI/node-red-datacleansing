@@ -1,6 +1,9 @@
 // テストヘルパ取り込み
 var helper = require("node-red-node-test-helper");
 
+// should.js取り込み
+require('should');
+
 // テスト対象lib取り込み
 var formatInfoLib = require("../../format-info/format-info.js");
 
@@ -184,7 +187,7 @@ async function load_10_OK_no_fmt_outputdata() {
     finfo01.should.have.property('fmtinfos', fmtinfos_nooutputdata);
 }
 
-testRunner.test_entry( "01 getFormatInfo fmtinfos未設定->null", "OK", getFormatInfo_01_OK_no_fmtinfos, "");
+testRunner.test_entry( "01 getFormatInfo fmtinfos未設定->error", "OK", getFormatInfo_01_OK_no_fmtinfos, "");
 async function getFormatInfo_01_OK_no_fmtinfos() {
     var target_template = node_template;
     var target_fmtinfos = fmtinfos_default;
@@ -194,12 +197,12 @@ async function getFormatInfo_01_OK_no_fmtinfos() {
     await helper.load(formatInfoLib, flow);
     var finfo01 = helper.getNode("fmtinfo01");
     
-    var fmtinfo = finfo01.getFormatInfo('000');
-
-    should(fmtinfo).be.exactly(null);        // nullチェック
+    (() => {
+        finfo01.getFormatInfo('000');
+    }).should.throw(Error);    
 }
 
-testRunner.test_entry( "02 getFormatInfo fmtinfos空文字列->null", "OK", getFormatInfo_02_OK_emptystring_fmtinfos, "");
+testRunner.test_entry( "02 getFormatInfo fmtinfos空文字列->error", "OK", getFormatInfo_02_OK_emptystring_fmtinfos, "");
 async function getFormatInfo_02_OK_emptystring_fmtinfos() {
     var target_template = node_template;
     var target_fmtinfos = fmtinfos_emptystring;
@@ -209,9 +212,9 @@ async function getFormatInfo_02_OK_emptystring_fmtinfos() {
     await helper.load(formatInfoLib, flow);
     var finfo01 = helper.getNode("fmtinfo01");
     
-    var fmtinfo = finfo01.getFormatInfo('000');
-
-    should(fmtinfo).be.exactly(null);        // nullチェック
+    (() => {
+        finfo01.getFormatInfo('000');
+    }).should.throw(Error);    
 }
 
 testRunner.test_entry( "03 getFormatInfo fmtinfos空配列->null", "OK", getFormatInfo_03_OK_emptyarray_fmtinfos, "");
@@ -244,7 +247,7 @@ async function getFormatInfo_04_OK_no_fno() {
     should(fmtinfo).be.exactly(null);        // nullチェック
 }
     
-testRunner.test_entry( "05 getFormatInfo fmtinfos fmt未設定->null", "OK", getFormatInfo_05_OK_no_fmt, "");
+testRunner.test_entry( "05 getFormatInfo fmtinfos fmt未設定->error", "OK", getFormatInfo_05_OK_no_fmt, "");
 async function getFormatInfo_05_OK_no_fmt() {
     var target_template = node_template;
     var target_fmtinfos = fmtinfos_nofmt;
@@ -253,10 +256,10 @@ async function getFormatInfo_05_OK_no_fmt() {
     flow[0].fmtinfos = target_fmtinfos;
     await helper.load(formatInfoLib, flow);
     var finfo01 = helper.getNode("fmtinfo01");
-        
-    var fmtinfo = finfo01.getFormatInfo('000');
 
-    should(fmtinfo).be.exactly(null);        // nullチェック
+    (() => {
+        finfo01.getFormatInfo('000');
+    }).should.throw(Error);
 }
     
 testRunner.test_entry( "06 getFormatInfo fmtinfos fmt-format未設定->正常", "OK", getFormatInfo_06_OK_no_fmt_format, "");
@@ -295,7 +298,7 @@ async function getFormatInfo_07_OK_no_fmt_outputdata() {
     (fmtinfo).should.be.exactly( JSON.parse(fmtinfos_nooutputdata)[0].fmt );
 }
     
-testRunner.test_entry( "08 getFormatInfo fmtinfos fmt-OutputData配列以外->null", "OK", getFormatInfo_08_OK_bad_fmt_outputdata, "");
+testRunner.test_entry( "08 getFormatInfo fmtinfos fmt-OutputData配列以外->error", "OK", getFormatInfo_08_OK_bad_fmt_outputdata, "");
 async function getFormatInfo_08_OK_bad_fmt_outputdata() {
     var target_template = node_template;
     var target_fmtinfos = fmtinfos_badoutputdata;
@@ -305,9 +308,9 @@ async function getFormatInfo_08_OK_bad_fmt_outputdata() {
     await helper.load(formatInfoLib, flow);
     var finfo01 = helper.getNode("fmtinfo01");
         
-    var fmtinfo = finfo01.getFormatInfo('000');
-
-    should(fmtinfo).be.exactly(null);        // nullチェック
+    (() => {
+        finfo01.getFormatInfo('000');
+    }).should.throw(Error);    
 }
 
 testRunner.test_entry( "09 getFormatInfo fmtinfos fmt-OutputData空配列->null", "OK", getFormatInfo_09_OK_empty_fmt_outputdata, "");
@@ -351,7 +354,7 @@ async function getFormatInfo_10_OK_no_fmt_outputdata_converters() {
     (fmtinfo).should.be.exactly( JSON.parse(fmtinfos_noconverter)[0].fmt );
 }
 
-testRunner.test_entry( "11 getFormatInfo fmtinfos fmt-OutputData-conveters配列以外->null", "OK", getFormatInfo_11_OK_bad_fmt_outputdata_converters, "");
+testRunner.test_entry( "11 getFormatInfo fmtinfos fmt-OutputData-conveters配列以外->error", "OK", getFormatInfo_11_OK_bad_fmt_outputdata_converters, "");
 async function getFormatInfo_11_OK_bad_fmt_outputdata_converters() {
     var target_template = node_template2;
     var target_fmtinfos = fmtinfos_badconverter;
@@ -360,10 +363,10 @@ async function getFormatInfo_11_OK_bad_fmt_outputdata_converters() {
     flow[0].fmtinfos = target_fmtinfos;
     await helper.load(formatInfoLib, flow);
     var finfo01 = helper.getNode("fmtinfo01");
-        
-    var fmtinfo = finfo01.getFormatInfo('000');
-    should(fmtinfo).be.exactly(null);        // nullチェック
 
+    (() => {
+        finfo01.getFormatInfo('000');
+    }).should.throw(Error);    
 }
 
 testRunner.test_entry( "12 getFormatInfo fmtinfos fmt-OutputData-conveters空配列->正常(更新無し)", "OK", getFormatInfo_12_OK_empty_fmt_outputdata_converters, "");

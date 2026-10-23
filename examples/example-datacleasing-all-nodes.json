@@ -2,7 +2,7 @@
     {
         "id": "d589d8bb.6c9a58",
         "type": "moduleinput",
-        "z": "7091f55b6dde4501",
+        "z": "ee5428a81c4b7904",
         "client": "537d24ae.0a466c",
         "input": "input1",
         "x": 130,
@@ -16,7 +16,7 @@
     {
         "id": "d5177694.b4ac78",
         "type": "debug",
-        "z": "7091f55b6dde4501",
+        "z": "ee5428a81c4b7904",
         "name": "traceLog",
         "active": true,
         "tosidebar": true,
@@ -33,7 +33,7 @@
     {
         "id": "d5d61b3.83ec0e8",
         "type": "data-cleansing2",
-        "z": "7091f55b6dde4501",
+        "z": "ee5428a81c4b7904",
         "name": "",
         "data": "payload",
         "dataType": "GaudiMsg",
@@ -41,12 +41,18 @@
         "fmtidType": "metaKey",
         "fmtinfo": "b4ae7036.4043a",
         "addins": {
-            "data": []
+            "data": [
+                {
+                    "funcName": "func1",
+                    "funcDescription": "func1-description",
+                    "pythonCode": "def func1(input, options):\n\treturn input"
+                }
+            ]
         },
-        "dirty": false,
         "editors": [],
         "codecheck": 0,
         "cnverr": "1",
+        "trace": false,
         "x": 540,
         "y": 60,
         "wires": [
@@ -62,7 +68,7 @@
     {
         "id": "3c2f8d9c.121b62",
         "type": "comment",
-        "z": "7091f55b6dde4501",
+        "z": "ee5428a81c4b7904",
         "name": "上位モジュールでformatID付与済みであればGetFormatIDノードは不要",
         "info": "",
         "x": 300,
@@ -72,7 +78,7 @@
     {
         "id": "50788004.759ae",
         "type": "moduleoutput",
-        "z": "7091f55b6dde4501",
+        "z": "ee5428a81c4b7904",
         "client": "537d24ae.0a466c",
         "output": "TestOutput",
         "x": 800,
@@ -82,7 +88,7 @@
     {
         "id": "cd59484d.937988",
         "type": "debug",
-        "z": "7091f55b6dde4501",
+        "z": "ee5428a81c4b7904",
         "name": "",
         "active": true,
         "tosidebar": true,
@@ -99,7 +105,7 @@
     {
         "id": "e6adb1b4.e4a1d",
         "type": "get-format-number",
-        "z": "7091f55b6dde4501",
+        "z": "ee5428a81c4b7904",
         "name": "",
         "from": "payload",
         "to": "format",
@@ -120,6 +126,6 @@
         "id": "b4ae7036.4043a",
         "type": "format-info",
         "name": "Format Info",
-        "fmtinfos": "[{\"fno\":\"999\",\"fmt\":\"{}\"}]"
+        "fmtinfos": "[{\"fno\":\"999\",\"fmt\":\"{\\\"OutputData\\\":[{\\\"OutputIndex\\\":1,\\\"OutputName\\\":\\\"\\\",\\\"InputIndex\\\":[1],\\\"InputName\\\":[],\\\"Converters\\\":[{\\\"Converter\\\":\\\"func1\\\",\\\"Enabled\\\":true,\\\"Options\\\":[]}]}]}\"}]"
     }
 ]

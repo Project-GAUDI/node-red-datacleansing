@@ -15,12 +15,230 @@
     // プロパティデフォルト値
     const prop_default_fmtinfos = "[{\"fno\":\"000\", \"fmt\":\"{}\"}]";
 
+    function createWarningMessage(key, replaceObj) {
+        let message;
+        const warnings = {
+            "array-length-zero": "__prefix__: __name__配列の長さが0です。",
+            "contain-not-match-conditions": "__prefix__: __name__内に__conditions__以外が含まれます。",
+            "empty":"__prefix__: __name__が空です。",
+            "empty_base":"__prefix__: 空欄です。",
+            "not-match-conditions": "__prefix__: __name__が__conditions__ではありません。",
+            "not-set-required": "__prefix__: __name__が存在しません。",
+            "not-type-object_base": "__prefix__: 型がobjectではありません。",
+            "not-type-array": "__prefix__: __name__が配列ではありません。",
+            "not-type-string": "__prefix__: __name__が文字列ではありません。",
+            "not-type-bool": "__prefix__: __name__が真偽値ではありません。",
+            "not-integer": "__prefix__: __name__が整数ではありません。",
+            "null_base": "__prefix__: nullです。"
+        };
+        if (key in warnings) {
+            message = warnings[key];
+            message = message.replace(/__([a-zA-Z0-9_]+)__/g, function (match, p1) {
+                if (p1 in replaceObj) {
+                    return replaceObj[p1];
+                } else {
+                    return match;
+                }
+            });
+        } else {
+            message = "バリデーションメッセージ作成失敗";
+        }
+        return message;
+    }
+
+    function CheckFormatInfos(fmtinfoArray){
+        let result = true;
+        let message = "";
+        const formatIdUnique = new Set();
+
+        // フォーマットリストの長さチェック
+        if(fmtinfoArray.length < 1){
+            result = false;
+            message = "フォーマット情報リストに設定が存在しません。";
+            return { result: result, message: message };
+        }
+
+        fmtinfoArray.map(( fmtinfoObj,fmtinfoIndex ) =>{
+            const fno = fmtinfoObj.fno;
+            const fmt = fmtinfoObj.fmt;
+            formatIdUnique.add(fno);
+
+            const decimalPattern = /^-?\d*\.\d+$/;
+
+            const prefix_base = `フォーマット情報リスト${fmtinfoIndex+1}`;
+            const prefix_fno = `${prefix_base}(フォーマットID)`;
+            const prefix_fmt = `${prefix_base}(フォーマット情報)`;
+
+            // フォーマットIDの空白チェック
+            if("" == fno){
+                result = false;
+                message = createWarningMessage("empty_base",{"prefix":prefix_fno});
+                return { result: result, message: message };
+            }
+            // フォーマット情報の空白チェック
+            if("" == fmt){
+                result = false;
+                message = createWarningMessage("empty_base",{"prefix":prefix_fmt});
+                return { result: result, message: message };
+            }
+            // フォーマット情報の型チェック(Object)
+            const fmtObj = JSON.parse(fmt);
+            if(null === fmtObj){
+                result = false;
+                message = createWarningMessage("null_base",{"prefix":prefix_fmt});
+                return { result: result, message: message };
+            }
+            if("object" !== typeof fmtObj || true == Array.isArray(fmtObj)){
+                result = false;
+                message = createWarningMessage("not-type-object_base",{"prefix":prefix_fmt});
+                return { result: result, message: message };
+            }
+            // フォーマット情報の必須プロパティチェック
+            if(false==("OutputData" in fmtObj)){
+                result = false;
+                message = createWarningMessage("not-set-required",{"prefix":prefix_fmt,"name":`OutputData`});
+                return { result: result, message: message };
+            }
+            if(false==(Array.isArray(fmtObj.OutputData))){
+                result = false;
+                message = createWarningMessage("not-type-array",{"prefix":prefix_fmt,"name":`OutputData`});
+                return { result: result, message: message };
+            }
+            if(fmtObj.OutputData.length < 1){
+                result = false;
+                message = createWarningMessage("array-length-zero",{"prefix":prefix_fmt,"name":`OutputData`});
+                return { result: result, message: message };
+            }
+            fmtObj.OutputData.map(( output,odIndex ) =>{
+                if(false == ("OutputIndex" in output)){
+                    result = false;
+                    message = createWarningMessage("not-set-required",{"prefix":prefix_fmt,"name":`OutputData[${odIndex}].OutputIndex`});
+                    return { result: result, message: message };
+                }
+                if("number" !== typeof output.OutputIndex && "Property" !== output.OutputIndex && "PropertyAddOnly" !== output.OutputIndex){
+                    result = false;
+                    message = createWarningMessage("not-match-conditions",{"prefix":prefix_fmt,"name":`OutputData[${odIndex}].OutputIndex`,"conditions":`数値または特定の文字列`});
+                    return { result: result, message: message };
+                }
+                if(true == decimalPattern.test(output.OutputIndex)){
+                    result = false;
+                    message = createWarningMessage("not-integer",{"prefix":prefix_fmt,"name":`OutputData[${odIndex}].OutputIndex`});
+                    return { result: result, message: message };
+                }
+                if(false == ("OutputName" in output) && ("Property" === output.OutputIndex || "PropertyAddOnly" === output.OutputIndex)){
+                    result = false;
+                    message = createWarningMessage("not-set-required",{"prefix":prefix_fmt,"name":`OutputData[${odIndex}].OutputName`});
+                    return { result: result, message: message };
+                }
+                if(false==("InputIndex" in output)){
+                    result = false;
+                    message = createWarningMessage("not-set-required",{"prefix":prefix_fmt,"name":`OutputData[${odIndex}].InputIndex`});
+                    return { result: result, message: message };
+                }
+                if(false==(Array.isArray(output.InputIndex))){
+                    result = false;
+                    message = createWarningMessage("not-type-array",{"prefix":prefix_fmt,"name":`OutputData[${odIndex}].InputIndex`});
+                    return { result: result, message: message };
+                }
+                if(output.InputIndex.length < 1){
+                    result = false;
+                    message = createWarningMessage("array-length-zero",{"prefix":prefix_fmt,"name":`OutputData[${odIndex}].InputIndex`});
+                    return { result: result, message: message };
+                }
+                if(false==(output.InputIndex.every(value => typeof value === "number"))){
+                    result = false;
+                    message = createWarningMessage("contain-not-match-conditions",{"prefix":prefix_fmt,"name":`OutputData[${odIndex}].InputIndex`,"conditions":`数値`});
+                    return { result: result, message: message };
+                }
+                if(true==(output.InputIndex.every(value => decimalPattern.test(value)))){
+                    result = false;
+                    message = createWarningMessage("contain-not-match-conditions",{"prefix":prefix_fmt,"name":`OutputData[${odIndex}].InputIndex`,"conditions":`整数`});
+                    return { result: result, message: message };
+                }
+                if(false==("Converters" in output)){
+                    result = false;
+                    message = createWarningMessage("not-set-required",{"prefix":prefix_fmt,"name":`OutputData[${odIndex}].Converters`});
+                    return { result: result, message: message };
+                }
+                if(false==(Array.isArray(output.Converters))){
+                    result = false;
+                    message = createWarningMessage("not-type-array",{"prefix":prefix_fmt,"name":`OutputData[${odIndex}].Converters`});
+                    return { result: result, message: message };
+                }
+                if(output.Converters.length < 1){
+                    result = false;
+                    message = createWarningMessage("array-length-zero",{"prefix":prefix_fmt,"name":`OutputData[${odIndex}].Converters`});
+                    return { result: result, message: message };
+                }
+                output.Converters.map(( converter,convIndex ) =>{
+                    if(false==("Converter" in converter)){
+                        result = false;
+                        message = createWarningMessage("not-set-required",{"prefix":prefix_fmt,"name":`OutputData[${odIndex}].Converters[${convIndex}].Converter`});
+                        return { result: result, message: message };
+                    }
+                    if("string" !== typeof converter.Converter){
+                        result = false;
+                        message = createWarningMessage("not-type-string",{"prefix":prefix_fmt,"name":`OutputData[${odIndex}].Converters[${convIndex}].Converter`});
+                        return { result: result, message: message };
+                    }
+                    if(false==("Enabled" in converter)){
+                        result = false;
+                        message = createWarningMessage("not-set-required",{"prefix":prefix_fmt,"name":`OutputData[${odIndex}].Converters[${convIndex}].Enabled`});
+                        return { result: result, message: message };
+                    }
+                    if("boolean" !== typeof converter.Enabled){
+                        result = false;
+                        message = createWarningMessage("not-type-bool",{"prefix":prefix_fmt,"name":`OutputData[${odIndex}].Converters[${convIndex}].Enabled`});
+                        return { result: result, message: message };
+                    }
+                });
+            });
+        });
+
+        // フォーマットIDの重複チェック
+        if(formatIdUnique.size != fmtinfoArray.length){
+            result = false;
+            message = `フォーマットIDの重複が存在します。`;
+            return { result: result, message: message };
+        }
+
+        return { result: result, message: message };
+    }
+
+    // 警告通知オプション作成
+    function createWarningNotifyOps(){
+        let notifyRef;
+        const notifyOpts = {
+            type: "warning",
+            fixed: "true",
+            buttons:[
+                {
+                    text:"閉じる",
+                    class:"primary",
+                    click: function(){
+                        if(notifyRef){
+                            notifyRef.close();
+                        }
+                    }
+                }
+            ]
+        }
+        return { notifyOpts, setNotify: (n) => {notifyRef = n;} };
+    }
+
     RED.nodes.registerType(myNodeName, {
         category: myNodeCategory,
         color: myNodeColor,
         defaults: {
             name: { value: "Format Info" },
-            fmtinfos: { value:prop_default_fmtinfos }
+            fmtinfos: {
+                value:prop_default_fmtinfos,
+                validate:function(v){
+                    let fmtinfoArray = JSON.parse(v);
+                    var { result, message } = CheckFormatInfos(fmtinfoArray);
+                    return result;
+                }
+            }
         },
         icon: myIconName,
         label: function () {
@@ -104,6 +322,13 @@
                 var data = {fno:fno.typedInput('value'), fmt:fmt.typedInput('value')};
                 infosdata.push(data);
             });
+
+            const { result, message } = CheckFormatInfos(infosdata);
+            if(false == result){
+                const { notifyOpts, setNotify } = createWarningNotifyOps();
+                const notify=RED.notify(message,notifyOpts);
+                setNotify(notify);
+            }
 
             $("#node-config-input-fmtinfos").val(JSON.stringify(infosdata));
         },
